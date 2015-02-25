@@ -160,35 +160,41 @@ class CimXML():
         self.scene = scene
 
         self.cim_xml = BeautifulSoup()
-        self.cim_xml.append(self.cim_xml.new_tag("Node"))
-        self.cim_xml.find('Node').append(self.cim_xml.new_tag("Breaker"))
 
         for item in scene.items():
             if isinstance(item, Node):
 
                 if item.myItemType == item.Religador:
-                    tag_id = self.cim_xml.new_tag(str(item.id))
-                    self.cim_xml.find("Breaker").append(tag_id)
+
+                    tag_node = self.cim_xml.new_tag("Node")
+                    self.cim_xml.append(tag_node)
+
+                    tag_breaker = self.cim_xml.new_tag("Breaker")
+                    tag_node.append(tag_breaker)
+                    
+                    tag_id = self.cim_xml.new_tag("mRID")
+                    tag_id.append(str(item.id))
+                    tag_breaker.append(tag_id)
 
                     tag_rc = self.cim_xml.new_tag("ratedCurrent")
                     tag_rc.append(str(item.chave.ratedCurrent))
-                    tag_id.append(tag_rc)
+                    tag_breaker.append(tag_rc)
 
                     tag_itt = self.cim_xml.new_tag("inTransitTime")
                     tag_itt.append(str(item.chave.inTransitTime))
-                    tag_id.append(tag_itt)
+                    tag_breaker.append(tag_itt)
 
                     tag_bc = self.cim_xml.new_tag("breakingCapacity")
                     tag_bc.append(str(item.chave.breakingCapacity))
-                    tag_id.append(tag_bc)
+                    tag_breaker.append(tag_bc)
 
                     tag_rs = self.cim_xml.new_tag("recloseSequences")
                     tag_rs.append(str(item.chave.recloseSequences))
-                    tag_id.append(tag_rs)
+                    tag_breaker.append(tag_rs)
 
-                    tag_state = self.cim_xml.new_tag("state")
-                    tag_state.append(str(item.chave.estado))
-                    tag_id.append(tag_state)
+                    tag_NO = self.cim_xml.new_tag("normalOpen")
+                    tag_NO.append(str(item.chave.normalOpen))
+                    tag_breaker.append(tag_NO)
 
 
                     # self.cim_xml.find(str(item.id)).append(self.cim_xml.new_tag("ratedCurrent"))
@@ -200,7 +206,115 @@ class CimXML():
 
                     # self.cim_xml.find(str(item.id)).append(self.cim_xml.new_tag("recloseSequences"))
 
-                    # self.cim_xml.find(str(item.id)).append(self.cim_xml.new_tag("state"))
+                    # self.cim_xml.find(str(item.id)).append(self.cim_xml.new_tag("state"))  
+
+        for item in scene.items():
+            if isinstance(item, Node):
+
+                if item.myItemType == item.Barra:
+
+                    tag_node = self.cim_xml.new_tag("Node")
+                    self.cim_xml.append(tag_node)
+
+                    tag_barra = self.cim_xml.new_tag("busBarSection")
+                    tag_node.append(tag_barra)
+
+                    tag_id = self.cim_xml.new_tag("id")
+                    tag_id.append(str(item.id))
+                    self.cim_xml.find("busBarSection").append(tag_id)
+
+                    tag_phases = self.cim_xml.new_tag("phases")
+                    tag_phases.append(str(item.barra.phases))
+                    tag_barra.append(tag_phases)
+
+                    #tag_itt = self.cim_xml.new_tag("inTransitTime")
+                    #tag_itt.append(str(item.chave.inTransitTime))
+                    #tag_id.append(tag_itt)
+
+                    #tag_bc = self.cim_xml.new_tag("breakingCapacity")
+                    #tag_bc.append(str(item.chave.breakingCapacity))
+                    #tag_id.append(tag_bc)
+
+                    #tag_rs = self.cim_xml.new_tag("recloseSequences")
+                    #tag_rs.append(str(item.chave.recloseSequences))
+                    #tag_id.append(tag_rs)
+
+                    #tag_state = self.cim_xml.new_tag("state")
+                    #tag_state.append(str(item.chave.estado))
+                    #tag_id.append(tag_state)
+        
+        for item in scene.items():
+            if isinstance(item, Node):
+
+                if item.myItemType == item.Subestacao:
+
+                    tag_node = self.cim_xml.new_tag("Node")
+                    self.cim_xml.append(tag_node)
+
+                    tag_substation = self.cim_xml.new_tag("Substation")
+                    tag_node.append(tag_substation)
+
+                    tag_id = self.cim_xml.new_tag("id")
+                    tag_id.append(str(item.id))
+                    self.cim_xml.find("Substation").append(tag_id)
+
+                    #tag_rc = self.cim_xml.new_tag("ratedCurrent")
+                    #tag_rc.append(str(item.chave.ratedCurrent))
+                    #tag_id.append(tag_rc)
+
+                    #tag_itt = self.cim_xml.new_tag("inTransitTime")
+                    #tag_itt.append(str(item.chave.inTransitTime))
+                    #tag_id.append(tag_itt)
+
+                    #tag_bc = self.cim_xml.new_tag("breakingCapacity")
+                    #tag_bc.append(str(item.chave.breakingCapacity))
+                    #tag_id.append(tag_bc)
+
+                    #tag_rs = self.cim_xml.new_tag("recloseSequences")
+                    #tag_rs.append(str(item.chave.recloseSequences))
+                    #tag_id.append(tag_rs)
+
+                    #tag_NO = self.cim_xml.new_tag("NormalOpen")
+                    #tag_NO.append(str(item.chave.estado))
+                    #tag_id.append(tag_NO)
+
+        for item in scene.items():
+            if isinstance(item, Node):
+
+                if item.myItemType == item.NoDeCarga:
+
+                    tag_node = self.cim_xml.new_tag("Node")
+                    self.cim_xml.append(tag_node)
+
+                    tag_connectivitynode = self.cim_xml.new_tag("ConnectivityNode")
+                    tag_node.append(tag_connectivitynode)
+                    
+                    tag_id = self.cim_xml.new_tag("id")
+                    tag_id.append(str(item.id))
+                    self.cim_xml.find("ConnectivityNode").append(tag_id)
+
+                    #tag_rc = self.cim_xml.new_tag("ratedCurrent")
+                    #tag_rc.append(str(item.chave.ratedCurrent))
+                    #tag_id.append(tag_rc)
+
+                    #tag_itt = self.cim_xml.new_tag("inTransitTime")
+  
+                    #tag_itt.append(str(item.chave.inTransitTime))
+                    #tag_id.append(tag_itt)
+
+                    #tag_bc = self.cim_xml.new_tag("breakingCapacity")
+                    #tag_bc.append(str(item.chave.breakingCapacity))
+                    #tag_id.append(tag_bc)
+
+                    #tag_rs = self.cim_xml.new_tag("recloseSequences")
+                    #tag_rs.append(str(item.chave.recloseSequences))
+                    #tag_id.append(tag_rs)
+
+                    #tag_NO = self.cim_xml.new_tag("NormalOpen")
+                    #tag_NO.append(str(item.chave.estado))
+                    #tag_id.append(tag_NO)
+
+
 
     def write_xml(self, path):
         '''
