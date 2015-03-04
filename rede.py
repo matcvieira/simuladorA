@@ -452,7 +452,7 @@ class Chave(Aresta):
     def __init__(self, nome=None, rated_current=None, in_transit_time=None, breaking_capacity=None, reclose_sequences=None, estado=1):
         assert estado == 1 or estado == 0, 'O parâmetro estado deve ser um inteiro de valor 1 ou 0'
         super(Chave, self).__init__(nome)
-        self.estado = estado
+        self.normalOpen = estado
         self.ratedCurrent = rated_current
         self.inTransitTime = in_transit_time
         self.breakingCapacity = breaking_capacity
@@ -466,7 +466,10 @@ class Chave(Aresta):
         else:
             return 'Chave: %s' % self.nome
 
-
+class BusBarSection(object):
+    def __init__(self,nome=None, phases = None):
+        self.nome = nome
+        self.phases = phases
 
 
 class Transformador(object):

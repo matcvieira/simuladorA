@@ -5,6 +5,7 @@ from PySide import QtCore, QtGui
 import math
 import sys
 from rede import Chave
+from dialogTeste import dialogTeste
 # import models
 
 from DialogRecloser import RecloserDialog
@@ -53,7 +54,7 @@ class GhostR(QtGui.QGraphicsRectItem):
         super(GhostR, self).mouseReleaseEvent(mouse_event)
     def paint(self, painter, option, widget):
 
-        painter.setPen(QtGui.QPen(QtCore.Qt.transparent,      # QPen Brush
+        painter.setPen(QtGui.QPen(QtCore.Qt.black,      # QPen Brush
                                   1,                    # QPen width
                                   QtCore.Qt.SolidLine,  # QPen style
                                   QtCore.Qt.SquareCap,  # QPen cap style
@@ -406,20 +407,20 @@ class Text(QtGui.QGraphicsTextItem):
         self.setPlainText(text)
         self.setZValue(100)
         self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, True)
-        self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable, True)
-        self.setTextInteractionFlags(
-            QtCore.Qt.TextInteractionFlag.TextEditorInteraction)
+        self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable, False)
+        #self.setTextInteractionFlags(
+            #QtCore.Qt.TextInteractionFlag.TextEditorInteraction)
         # self.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
         # self.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByKeyboard)
 
-    def mouseDoubleClickEvent(self, event):
-        '''
-            Metodo que trata o evento de duplo click no item grafico texto
-            para edicao de seu conteudo
-        '''
-        if self.textInteractionFlags() == QtCore.Qt.NoTextInteraction:
-            self.setTextInteractionFlags(QtCore.Qt.TextEditorInteraction)
-        super(Text, self).mouseDoubleClickEvent(event)
+    #def mouseDoubleClickEvent(self, event):
+       # '''
+          #  Metodo que trata o evento de duplo click no item grafico texto
+         #   para edicao de seu conteudo
+        #'''
+     #   if self.textInteractionFlags() == QtCore.Qt.NoTextInteraction:
+       #     self.setTextInteractionFlags(QtCore.Qt.TextEditorInteraction)
+      #  super(Text, self).mouseDoubleClickEvent(event)
 
     def itemChange(self, change, value):
         if change == QtGui.QGraphicsItem.ItemSelectedChange:
@@ -487,7 +488,7 @@ class Node(QtGui.QGraphicsRectItem):
             rect = QtCore.QRectF(0, 0, 7, 7)
 
         elif self.myItemType == self.NoDeCarga:
-            rect = QtCore.QRectF(0, 0, 10, 10)
+            rect = QtCore.QRectF(0, 0, 12, 12)
             self.text = Text('Carga', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
 
@@ -615,7 +616,7 @@ class Node(QtGui.QGraphicsRectItem):
         elif self.myItemType == self.NoDeCarga:
             painter.setPen(QtGui.QPen(QtCore.Qt.black, 1.5))
             painter.setBrush(QtCore.Qt.black)
-            painter.drawEllipse(self.rect())
+            painter.drawRect(self.rect())
 
         if self.isSelected():
             painter.setPen(QtGui.QPen(QtCore.Qt.red, 2, QtCore.Qt.DashLine))
@@ -693,6 +694,59 @@ class Node(QtGui.QGraphicsRectItem):
             self.myNodeMenu.exec_(event.screenPos())
 
 
+class command(QtGui.QUndoCommand):
+
+    def __init__(self, comando, scene, item, pos):
+        super(command, self).__init__(comando)
+        self.comando = comando
+        self.item = item
+        self.scene = scene
+        self.pos = pos
+        self.count = 0
+
+    def redo(self):
+        print "oiiii"
+        self.count += 1
+        if self.count <=1:
+            return
+        if self.comando == "Add Item":
+            self.scene.addItem(self.item)
+        elif self.comando == "Add Line":
+            
+            if self.item.w1.myItemType == Node.NoConectivo and len(self.item.w1.edges) <= 1:
+                self.scene.addItem(self.item.w1)
+            if self.item.w2.myItemType == Node.NoConectivo and len(self.item.w2.edges) <= 1:
+                self.scene.addItem(self.item.w2)
+            self.scene.addItem(self.item)
+            self.scene.addItem(self.item.GhostRetItem)
+            self.item.update_position()
+        elif self.comando == "Increase Bus":
+            self.item.setSelected(True)
+            self.scene.increase_bus()
+
+        # self.count = 0
+
+
+
+    def undo(self):
+        if self.comando == "Add Item":
+            self.scene.removeItem(self.item)
+        elif self.comando == "Add Line":
+            
+            if self.item.w1.myItemType == Node.NoConectivo and len(self.item.w1.edges) <= 1:
+                self.scene.removeItem(self.item.w1)
+            if self.item.w2.myItemType == Node.NoConectivo and len(self.item.w2.edges) <= 1:
+                self.scene.removeItem(self.item.w2)
+            # self.item.w1.edge_counter -= 1
+            # self.item.w2.edge_counter -= 1
+            self.scene.removeItem(self.item)
+            self.scene.removeItem(self.item.GhostRetItem)
+        elif self.comando == "Increase Bus":
+            self.item.setSelected(True)
+            self.scene.decrease_bus()
+            
+
+
 class SceneWidget(QtGui.QGraphicsScene):
     '''
         Classe que implementa o container Grafico onde os
@@ -725,6 +779,8 @@ class SceneWidget(QtGui.QGraphicsScene):
         self.text_item = None
         self.create_actions()
         self.create_menus()
+        self.undoStack = QtGui.QUndoStack()
+
 
     def mousePressEvent(self, mouse_event):
         '''
@@ -754,6 +810,8 @@ class SceneWidget(QtGui.QGraphicsScene):
 
             self.addItem(item)
             item.setPos(mouse_event.scenePos())
+            comando = command("Add Item", self, item, item.scenePos())
+            self.undoStack.push(comando)
             self.itemInserted.emit(self.myItemType)
 
         elif self.myMode == self.InsertLine:
@@ -1020,9 +1078,16 @@ class SceneWidget(QtGui.QGraphicsScene):
 
                 if start_item.myItemType == Node.Barra:
                     if end_item.myItemType == Node.NoConectivo:
+                        for item in self.items():
+                            if item.isUnderMouse():
+                                print "bateu"
+                                return
                         end_item = Node(Node.Religador, self.myRecloserMenu)
                         self.addItem(end_item)
                         end_item.setPos(mouse_event.scenePos())
+                        comando = command("Add Item", self, end_item, end_item.scenePos())
+                        self.undoStack.push(comando)
+
                     #if end_item.myItemType == Node.Barra:
                         
 
@@ -1039,13 +1104,21 @@ class SceneWidget(QtGui.QGraphicsScene):
                                 Node.Religador, self.myRecloserMenu)
                             self.addItem(start_item)
                             start_item.setPos(self.pressPos)
+                            # comando = command("Add Item", self, start_item, start_item.scenePos())
+                            # self.undoStack.push(comando)
                         if end_item.myItemType == Node.Religador or end_item.myItemType == Node.Subestacao:
                             if len(end_item.edges) > 1:
                                 return
                         self.addItem(start_item)
+                        # comando = command("Add Item", self, start_item, start_item.scenePos())
+                        # self.undoStack.push(comando)
                     else:
                         self.addItem(start_item)
+                        # comando = command("Add Item", self, start_item, start_item.scenePos())
+                        # self.undoStack.push(comando)
                         self.addItem(end_item)
+                        # comando = command("Add Item", self, end_item, end_item.scenePos())
+                        # self.undoStack.push(comando)
 
             # Criação da edge definitiva
             edge = Edge(start_item, end_item, self.myLineMenu)
@@ -1053,6 +1126,8 @@ class SceneWidget(QtGui.QGraphicsScene):
             edge.set_color(QtCore.Qt.black)
             self.addItem(edge.GhostRetItem)
             edge.update_position()
+            comando = command("Add Line", self, edge, None)
+            self.undoStack.push(comando)
 
             if edge.w1.myItemType == Node.NoConectivo:
                 aux = edge.w1
@@ -1127,31 +1202,38 @@ class SceneWidget(QtGui.QGraphicsScene):
         super(SceneWidget, self).mouseReleaseEvent(mouse_event)
 
         #     Problema quando tenta-se modificar o texto dos componentes
-        #     def keyPressEvent(self, event):
-        #         key = event.key()
-        #         if key == QtCore.Qt.Key_Up:
-        #             for item in self.selectedItems():
-        #                 item.moveBy(0, -5)
-        #         elif key == QtCore.Qt.Key_Down:
-        #             for item in self.selectedItems():
-        #                 item.moveBy(0, 5)
-        #         elif key == QtCore.Qt.Key_Left:
-        #             for item in self.selectedItems():
-        #                 item.moveBy(-5, 0)
-        #         elif key == QtCore.Qt.Key_Right:
-        #             for item in self.selectedItems():
-        #                 item.moveBy(5, 0)
-        #         elif key == QtCore.Qt.Key_Space or key == QtCore.Qt.Key_Enter:
-        #             pass
-        #         elif key == QtCore.Qt.Key_Control:
-        #             self.keyControlIsPressed = True
-        #             print 'Ctrl pressed'
-        #         elif key == QtCore.Qt.Key_Delete:
-        #             self.delete_item()
-        #         else:
-        #             pass
-        #             #super(SceneWidget, self).keyPressEvent(self, event)
-        #         return
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key == QtCore.Qt.Key_Up:
+            for item in self.selectedItems():
+                item.moveBy(0, -5)
+        elif key == QtCore.Qt.Key_Down:
+            for item in self.selectedItems():
+                item.moveBy(0, 5)
+        elif key == QtCore.Qt.Key_Left:
+            for item in self.selectedItems():
+                item.moveBy(-5, 0)
+            self.undoStack.undo()
+            print self.undoStack.index()
+        elif key == QtCore.Qt.Key_Right:
+            for item in self.selectedItems():
+                item.moveBy(5, 0)
+            self.undoStack.redo()
+            print self.undoStack.index()
+        elif key == QtCore.Qt.Key_Space or key == QtCore.Qt.Key_Enter:
+            pass
+        elif key == QtCore.Qt.Key_Control:
+            self.keyControlIsPressed = True
+            print 'Ctrl pressed'
+        elif key == QtCore.Qt.Key_Delete:
+            self.delete_item()
+        elif key == QtCore.Qt.Key_Escape:
+            for item in self.items():
+                item.setSelected(False)
+        else:
+            pass
+            super(SceneWidget, self).keyPressEvent(self, event)
+        return
     def break_edge(self, end_newline):
         print "remove fantasma"
         self.removeItem(self.ghost.edge.GhostRetItem)
@@ -1302,6 +1384,7 @@ class SceneWidget(QtGui.QGraphicsScene):
                         else:
                             item.chave.recloseSequences = dialog.nDeSequNciasDeReligamentoLineEdit.text()
                 if item.myItemType == Node.Subestacao:
+                    dialog = dialogTeste()
                     return
                     # dialog = SubstationDialog(item)
 
@@ -1330,16 +1413,19 @@ class SceneWidget(QtGui.QGraphicsScene):
             Este método implementa a açao de aumentar o tamanho do item gráfico
             barra.
         '''
+
         for item in self.selectedItems():
             if isinstance(item, Node):
                 item.prepareGeometryChange()
                 item.setRect(
                     item.rect().x(), item.rect().y(), item.rect().width(),
                     item.rect().height() * 1.25)
+                comando = command("Increase Bus", self, item, None)
+                self.undoStack.push(comando)
 
     def decrease_bus(self):
         '''
-            Este método implementa a ação de aumentar o tamanho do item gráfico
+            Este método implementa a ação de diminuir o tamanho do item gráfico
             barra.
         '''
         for item in self.selectedItems():
@@ -1347,7 +1433,7 @@ class SceneWidget(QtGui.QGraphicsScene):
                 item.prepareGeometryChange()
                 item.setRect(
                     item.rect().x(), item.rect().y(), item.rect().width(),
-                    item.rect().height() * 0.75)
+                    item.rect().height() / 1.25)
 
     def align_line_h(self):
         for item in self.selectedItems():
