@@ -5,11 +5,12 @@ from PySide import QtCore, QtGui
 import math
 import sys
 from rede import Chave
-from dialogTeste import dialogTeste
-# import models
-
+from rede import BusBarSection
+from rede import Transformador
 from DialogRecloser import RecloserDialog
 from DialogLine import LineDialog
+from DialogBarra import BarraDialog
+from DialogSubstation import SubstationDialog
 
 
 class Edge(QtGui.QGraphicsLineItem):
@@ -307,19 +308,21 @@ class Node(QtGui.QGraphicsRectItem):
         if self.myItemType == self.Subestacao:
             rect = QtCore.QRectF(0, 0, 50.0, 50.0)
             # definine e ajusta a posicao do label do item grafico
+            self.substation = Transformador("Identificador", 0.0, 0.0, 0.0, complex(0,0))
             self.text = Text('Subestacao', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
         # caso o item a ser inserido seja do tipo religador
         elif self.myItemType == self.Religador:
             rect = QtCore.QRectF(0, 0, 40.0, 40.0)
             # Cria o objeto abstrato chave referente ao religador
-            self.chave = Chave(str(self.id))
+            self.chave = Chave("Identificador")
             # definine e ajusta a posicao do label do item grafico
             self.text = Text('Religador', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
         # caso o item a ser inserido seja do tipo barra
         elif self.myItemType == self.Barra:
             rect = QtCore.QRectF(0, 0, 10.0, 100.0)
+            self.barra = BusBarSection("Identificador")
             # definine e ajusta a posicao do label do item grafico
             self.text = Text('Barra', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
@@ -1149,30 +1152,32 @@ class SceneWidget(QtGui.QGraphicsScene):
                             pass
                         else:
                             item.chave.recloseSequences = dialog.nDeSequNciasDeReligamentoLineEdit.text()
-                if item.myItemType == Node.Subestacao:
-                    dialog = dialogTeste()
-                    return
-                    # dialog = SubstationDialog(item)
+                
+            if isinstance(item, Node):
+                if item.myItemType == Node.Barra:
+                    dialog = BarraDialog(item)
+                    if dialog.dialog.result() == 1:
+                        if dialog.nomeLineEdit.text() == "":
+                            pass
+                        else:
+                            item.barra.nome = dialog.nomeLineEdit.text()
+                        if dialog.fasesLineEdit.text() == "":
+                            pass
+                        else:
+                            item.barra.phases = dialog.fasesLineEdit.text()
 
-            if isinstance(item, Edge):
-                dialog = LineDialog()
-                    # if dialog.dialog.result() == 1:
-                    #     if dialog.identificaOLineEdit.text() == "":
-                    #         pass
-                    #     else:
-                    #         item.chave.nome = dialog.identificaOLineEdit.text()
-                    #     if dialog.correnteNominalLineEdit.text() == "":
-                    #         pass
-                    #     else:
-                    #         item.chave.ratedCurrent = dialog.correnteNominalLineEdit.text()
-                    #     if dialog.capacidadeDeInterrupOLineEdit.text() == "":
-                    #         pass
-                    #     else:
-                    #         item.chave.breakingCapacity = dialog.capacidadeDeInterrupOLineEdit.text()
-                    #     if dialog.nDeSequNciasDeReligamentoLineEdit.text() == "":
-                    #         pass
-                    #     else:
-                    #         item.chave.recloseSequences = dialog.nDeSequNciasDeReligamentoLineEdit.text()
+            if isinstance(item, Node):
+                if item.myItemType == Node.Subestacao:
+                    dialog = SubstationDialog(item)
+                    if dialog.dialog.result() == 1:
+                        if dialog.nomeLineEdit.text() == "":
+                            pass
+                        else:
+                            item.substation.nome = dialog.nomeLineEdit.text()
+                        if dialog.tpLineEdit.text() == "":
+                            pass
+                        else:
+                            item.substation.tensao_primario = dialog.tpLineEdit.text()
 
     def increase_bus(self):
         '''
