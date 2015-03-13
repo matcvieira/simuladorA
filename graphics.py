@@ -12,64 +12,12 @@ from DialogRecloser import RecloserDialog
 from DialogLine import LineDialog
 
 
-class GhostR(QtGui.QGraphicsRectItem):
-    def __init__(self, x, y, w, h, edge, event):
-        QtGui.QGraphicsRectItem.__init__(self)
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
-        self.no = None
-        self.edge = edge
-        self.event = event
-        self.setRect(x, y, w, h)
-        self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, False)
-        self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable, False)
-
-    def contextMenuEvent(self, event):
-        self.scene().clearSelection()
-        self.setSelected(True)
-        self.edge.setSelected(True)
-        self.edge.myEdgeMenu.exec_(event.screenPos())
-
-        super(GhostR, self).contextMenuEvent(event)
-
-    def mousePressEvent(self, mouse_event):
-        if (mouse_event.button() == QtCore.Qt.LeftButton):
-            # self.scene().removeItem(self)
-            for item in self.scene().items(mouse_event.scenePos()):
-                item.grabMouse()
-            super(GhostR, self).mousePressEvent(mouse_event)
-            return
-        # self.setSelected(True)
-
-        super(GhostR, self).mousePressEvent(mouse_event)
-        return
-
-    def mouseReleaseEvent(self, mouse_event):
-        for item in self.scene().items():
-            if isinstance(item, Node):
-                item.ungrabMouse()
-                item.setSelected(False)
-        super(GhostR, self).mouseReleaseEvent(mouse_event)
-    def paint(self, painter, option, widget):
-
-        painter.setPen(QtGui.QPen(QtCore.Qt.black,      # QPen Brush
-                                  1,                    # QPen width
-                                  QtCore.Qt.SolidLine,  # QPen style
-                                  QtCore.Qt.SquareCap,  # QPen cap style
-                                  QtCore.Qt.RoundJoin)  # QPen join style
-                       )
-        # painter.setBrush(QtCore.Qt.black)
-        painter.drawEllipse(self.edge.GhostRet)
-
-
 class Edge(QtGui.QGraphicsLineItem):
     '''
         Classe que implementa o objeto Edge que liga dois objetos Node um ao
         outro
     '''
-    def __init__(self, w1, w2, edge_menu, parent=None, scene=None):
+    def __init__(self, w1, w2, edge_menu):
         '''
             Metodo inicial da classe Edge
             Recebe como parâmetros os objetos Node Inicial e Final
@@ -85,131 +33,29 @@ class Edge(QtGui.QGraphicsLineItem):
 # objeto w2
 
         self.myEdgeMenu = edge_menu
-
-
-
         line = QtCore.QLineF(self.w1.pos(), self.w2.pos())
         self.setLine(line)
         self.setZValue(-1)
         self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable, True)
-
-        self.GhostRet = QtCore.QRectF()
-        self.GhostRetItem = GhostR(0, 0, 0, 0, self, self.myEdgeMenu)
         self.isFixed = False
         self.fixFlag = False
-
-    def update_ret(self):
-        delta_yo = self.line().p2().y() - self.line().p1().y()
-        delta_xo = self.line().p2().x() - self.line().p1().x()
-        delta_y = math.fabs(self.line().p2().y() - self.line().p1().y())
-        delta_x = math.fabs(self.line().p2().x() - self.line().p1().x())
-        if self.line().p2().y() < self.line().p1().y():
-            ybase = self.line().p2().y()
-            # ytop  = self.line().p1().y()
-        else:
-            ybase = self.line().p1().y()
-            # ytop  = self.line().p2().y()
-        if self.line().p2().x() < self.line().p1().x():
-            xbase = self.line().p2().x()
-            # xtop  = self.line().p1().y()
-        else:
-            xbase = self.line().p1().x()
-            # xtop  = self.line().p2().y()
-
-        # newDeltaY = ytop - ybase
-        # newDeltaX = xtop - xbase
-        angle = math.degrees(math.atan2(delta_y, delta_x))
-        compfix = self.line().length()
-        comp = delta_x - 40
-        # larg = (delta_y / 2) - 5
-        if (delta_x - 40) < (0.7 * compfix):
-            if delta_y < 0.5 * compfix:
-                xbase = xbase - 5
-                pass
-            else:
-                comp = delta_y - 20
-                xbase = xbase - delta_y / 1000
-        if (delta_x - 40) < (0.6 * compfix):
-            if delta_y < 0.5 * compfix:
-                xbase = xbase - 5
-                pass
-            else:
-                comp = delta_y - 20
-                xbase = xbase - 100 * delta_y / 1000
-        if (delta_x - 40) < (0.5 * compfix):
-            if delta_y < 0.5 * compfix:
-                xbase = xbase - 5
-                comp = comp + 2
-                pass
-            else:
-                comp = delta_y - 20
-                xbase = xbase - 100 * delta_y / 1000
-        if (delta_x - 40) < (0.4 * compfix):
-            if delta_y < 0.5 * compfix:
-                xbase = xbase - 5
-                comp = comp + 2
-                pass
-            else:
-                comp = delta_y - 20
-                xbase = xbase - 50 * delta_y / 1000
-
-        if (delta_x - 40) < (0.3 * compfix):
-            if delta_y < 0.5 * compfix:
-                xbase = xbase - 5
-                comp = comp + 2
-                pass
-            else:
-                comp = delta_y - 20
-                xbase = xbase - 100 * delta_y / 1000
-        if (delta_x - 40) < (0.15 * compfix):
-            if delta_y < 0.5 * compfix:
-                xbase = xbase - 5
-                comp = comp + 2
-                pass
-            else:
-                comp = delta_y - 20
-                xbase = xbase - 70 * delta_y / 1000
-
-        if (delta_x - 40) < (0.05 * compfix):
-            if delta_y < 0.5 * compfix:
-                xbase = xbase - 5
-                comp = comp + 2
-                pass
-            else:
-                comp = delta_y - 20
-                xbase = xbase - 70 * delta_y / 1000
-
-        self.GhostRet.setRect(xbase + 40, ybase + (delta_y / 2) - 5, comp, 50)
-        if self.w1.myItemType == Node.NoConectivo or self.w2.myItemType == Node.NoConectivo:
-            self.GhostRet.setRect(xbase + 40, ybase + (delta_y / 2) - 5, comp, 50)
-        if self.isFixed:
-            self.GhostRet.adjust(-20, -20, -20, -20)
-        x = self.GhostRet.center().x()
-        y = self.GhostRet.center().y()
-        self.GhostRetItem.setRect(self.GhostRet)
-        self.GhostRetItem.setTransform(
-            QtGui.QTransform().translate(x, y).rotate(angle).translate(-x, -y))
-        if (delta_xo < 0 and delta_yo > 0) or (delta_xo > 0 and delta_yo < 0):
-            self.GhostRetItem.setTransform(
-                QtGui.QTransform().translate(x, y).rotate(-angle).translate(
-                    -x, -y))
-        # if self.GhostRetItem.collidesWithItem(self.w1):
-        #     if self.w1.myItemType == Node.NoConectivo:
-        #         print "bateu no nó"
-        #         self.GhostRetItem.setRect(self.GhostRetItem.rect().adjusted(-10,-10,-10,-10))
-
-        # if self.GhostRetItem.collidesWithItem(self.w2):
-        #     if self.w2.myItemType == Node.NoConectivo:
-        #         print "bateu no nó"
-        #         self.GhostRetItem.setRect(self.GhostRetItem.rect().adjusted(-10,-10,-10,-10))
-
+        self.isPermanent = False
+        if w1.myItemType == Node.Barra or w2.myItemType == Node.Barra:
+            print "hey!"
+            self.isPermanent = True
+            if w1.myItemType == Node.Barra:
+                w1.bar_busy = True
+            if w2.myItemType == Node.Barra:
+                w2.bar_busy = True
 
     def get_fraction(self, pos):
         deltaX = math.fabs(self.line().p2().x() - self.line().p1().x())
         deltaY = math.fabs(self.line().p2().y() - self.line().p1().y())
 
         dist = math.sqrt(pow(pos.x() - self.line().p1().x(), 2) + pow(pos.y() - self.line().p1().y(), 2))
-        fraction = dist/self.line().length()
+        fraction = dist / self.line().length()
+        print "fraction:"
+        print fraction
         if 0.75 < fraction < 1:
             fraction = 0.75
         if 0.5 < fraction < 0.75:
@@ -230,7 +76,6 @@ class Edge(QtGui.QGraphicsLineItem):
 
         return posf
 
-
     def update_position(self):
         '''
             Metodo de atualizacao da posicao do objeto edge implementado pela
@@ -249,7 +94,7 @@ class Edge(QtGui.QGraphicsLineItem):
 
         self.prepareGeometryChange()
         self.setLine(line)
-        self.update_ret()
+        # self.update_ret()
 
     def set_color(self, color):
         self.setPen(QtGui.QPen(color))
@@ -291,7 +136,7 @@ class Edge(QtGui.QGraphicsLineItem):
         # Se o item self.w1 for do tipo barra deve-se alinhar o item self.w2
         if self.w1.myItemType == Node.Barra and self.w2.myItemType != Node.Subestacao:
             self.fixFlag = True
-            self.w2.bar = True
+            self.w2.Fixed = True
             # se o numero de linhas conectas a barra for maior que 1 deve-se
             # proceder a logica de distribuicao e alinhamento
             if len(self.w1.edges) > 1:
@@ -323,7 +168,7 @@ class Edge(QtGui.QGraphicsLineItem):
         # Se o item self.w2 for do tipo barra deve-se alinhar o item self.w1
         elif self.w2.myItemType == Node.Barra and self.w1.myItemType != Node.Subestacao:
             self.fixFlag = True
-            self.w1.bar = True
+            self.w1.Fixed = True
             # se o numero de linhas conectas a barra for maior que 1 deve-se
             # proceder a logica de distribuicao e alinhamento
             if len(self.w2.edges) > 1:
@@ -360,10 +205,9 @@ class Edge(QtGui.QGraphicsLineItem):
         self.setLine(line)
         if self.fixFlag:
             self.isFixed = True
-            self.update_ret()
 
         painter.setPen(QtGui.QPen(QtCore.Qt.black,  # QPen Brush
-                                                    1,  # QPen width
+                                                    2,  # QPen width
                                                     QtCore.Qt.SolidLine,
                                                     # QPen style
                                                     QtCore.Qt.SquareCap,
@@ -390,7 +234,7 @@ class Edge(QtGui.QGraphicsLineItem):
     def contextMenuEvent(self, event):
         self.scene().clearSelection()
         self.setSelected(True)
-        self.myEdgeMenu.exec_(event.screenPos())
+        self.myEdgeMenu.exec_(event.screenPos() + QtCore.QPointF(20,20))
 
 
 class Text(QtGui.QGraphicsTextItem):
@@ -456,7 +300,9 @@ class Node(QtGui.QGraphicsRectItem):
         self.myItemType = item_type
         self.Fixed = False
         self.edge_counter = 0
-        self.bar = False
+        self.bar_busy = False
+        self.mean_pos = None
+        self.semiFixed = False
         # caso o item a ser inserido seja do tipo subestacao
         if self.myItemType == self.Subestacao:
             rect = QtCore.QRectF(0, 0, 50.0, 50.0)
@@ -513,7 +359,7 @@ class Node(QtGui.QGraphicsRectItem):
         deleted_list = []
         for edge in self.edges:
             deleted_list.append(edge)
-            self.scene().removeItem(edge.GhostRetItem)
+            # self.scene().removeItem(edge.GhostRetItem)
             self.scene().removeItem(edge)
 
         for edge in deleted_list:
@@ -589,32 +435,32 @@ class Node(QtGui.QGraphicsRectItem):
         # self.text.setPos(0, self.rect().height())
         # caso o item a ser inserido seja do tipo subestacao
         if self.myItemType == self.Subestacao:
-            painter.setPen(QtGui.QPen(QtCore.Qt.black, 1.5))
+            painter.setPen(QtGui.QPen(QtCore.Qt.black, 2))
             painter.setBrush(QtCore.Qt.white)
             painter.drawEllipse(self.rect())
         # caso o item a ser inserido seja do tipo religador1
         elif self.myItemType == self.Religador:
-            painter.setPen(QtGui.QPen(QtCore.Qt.black, 1.5))
+            painter.setPen(QtGui.QPen(QtCore.Qt.black, 2))
             painter.setBrush(QtCore.Qt.white)
             painter.drawRoundedRect(self.rect(), 5, 5)
         # caso o item a ser inserido seja do tipo barra
         elif self.myItemType == self.Barra:
-            painter.setPen(QtGui.QPen(QtCore.Qt.black, 1.5))
+            painter.setPen(QtGui.QPen(QtCore.Qt.black, 2))
             painter.setBrush(QtCore.Qt.black)
             painter.drawRoundedRect(self.rect(), 2, 2)
         # caso o item a ser inserido seja do tipo agent
         elif self.myItemType == self.Agent:
-            painter.setPen(QtGui.QPen(QtCore.Qt.black, 1.5))
+            painter.setPen(QtGui.QPen(QtCore.Qt.black, 2))
             painter.setBrush(QtCore.Qt.white)
             painter.drawRect(self.rect())
         # caso o item a ser inserido seja do tipo nó conectivo
         elif self.myItemType == self.NoConectivo:
-            painter.setPen(QtGui.QPen(QtCore.Qt.black, 1.5))
+            painter.setPen(QtGui.QPen(QtCore.Qt.black, 2))
             painter.setBrush(QtCore.Qt.black)
             painter.drawEllipse(self.rect())
 
         elif self.myItemType == self.NoDeCarga:
-            painter.setPen(QtGui.QPen(QtCore.Qt.black, 1.5))
+            painter.setPen(QtGui.QPen(QtCore.Qt.black, 2))
             painter.setBrush(QtCore.Qt.black)
             painter.drawRect(self.rect())
 
@@ -635,6 +481,7 @@ class Node(QtGui.QGraphicsRectItem):
         return QtGui.QGraphicsItem.itemChange(self, change, value)
 
     def mousePressEvent(self, mouse_event):
+        self.scene().clearSelection()
         # print "Id:", self.chave.nome, ",", "Corrente Nominal:", self.chave.ratedCurrent, ",", "Breaking Capacity:", self.chave.breakingCapacity, ",", "Seq de Religamento", self.chave.recloseSequences
         self.setSelected(True)
         print "num_edges"
@@ -647,46 +494,46 @@ class Node(QtGui.QGraphicsRectItem):
         return
 
     def mouseReleaseEvent(self, mouse_event):
+        print "=================RELEASE EVENT======================="
+        super(Node, self).mouseReleaseEvent(mouse_event)
         new_edge = None
         scene = self.scene()
-        for edge in self.edges:
-            if edge.w1 == self:
-                new_obj = edge.w2
-            if edge.w2 == self:
-                new_obj = edge.w1
-        if self.myItemType == Node.NoConectivo:
-            for item in self.scene().items():
-                if isinstance(item, Node):
+        ell = QtGui.QGraphicsEllipseItem()
+        ell.setRect(QtCore.QRectF(mouse_event.scenePos() - QtCore.QPointF(10,10), QtCore.QSizeF(30,30)))
+        scene.addItem(ell)
+        if self.myItemType == Node.NoConectivo and len(self.edges) == 1:
+            for item in scene.items():
+                if ell.collidesWithItem(item):
+                    if isinstance(item, Node):
+                        if item.myItemType != Node.NoConectivo:
+                            if item.myItemType == Node.Barra:
+                                scene.removeItem(ell)
+                                return
+                            for edge in self.edges:
+                                edge.scene().removeItem(edge)
+                                if edge.w1.myItemType != Node.NoConectivo:
+                                    w1 = edge.w1
+                                else:
+                                    w1 = edge.w2
+                                new_edge = Edge(w1, item, scene.myLineMenu)
+                                scene.addItem(new_edge)
+                                new_edge.update_position()
+                                scene.removeItem(self)
 
-                    if self.collidesWithItem(item):
-                        if item.myItemType == 1:
-                            self.remove_edges()
-                            self.moveBy(50,50)
-                            self.hide()
-                            new_edge = Edge(new_obj, item, scene.myLineMenu)
-                            scene.addItem(new_edge)
-                            scene.addItem(new_edge.GhostRetItem)
-                            new_edge.update_position()
-                        # if edge.w2 == self:
-                        #     edge.w2 = item
-                        #     edge.update_position()
-                        #     self.scene().removeItem(self)
+
         if self.myItemType == Node.NoDeCarga:
-            for item in self.scene().items():
-                if isinstance(item, GhostR):
-                    if self.collidesWithItem(item):
-                        if item.edge.line().length() < 130:
+            for item in scene.items():
+                if self.collidesWithItem(item):
+                    if isinstance(item, Edge) and not item.isUnderMouse():
+                        if item.line().length() < 130:
                             return
-                        pos = item.edge.get_fraction(mouse_event.scenePos())
+                        break_mode = 3
+                        pos = item.get_fraction(mouse_event.scenePos())
                         self.setPos(pos.x()-5, pos.y()-5)
-                        scene = self.scene()
-                        scene.ghost = item
-                        scene.break_edge(self)
-
-
-        super(Node, self).mouseReleaseEvent(mouse_event)
+                        scene.break_edge(item, break_mode, self)
+        scene.removeItem(ell)
+        print "=================END OF RELEASE EVENT======================="
         return
-
 
     def contextMenuEvent(self, event):
             self.scene().clearSelection()
@@ -718,13 +565,12 @@ class command(QtGui.QUndoCommand):
             if self.item.w2.myItemType == Node.NoConectivo and len(self.item.w2.edges) <= 1:
                 self.scene.addItem(self.item.w2)
             self.scene.addItem(self.item)
-            self.scene.addItem(self.item.GhostRetItem)
+            # self.scene.addItem(self.item.GhostRetItem)
             self.item.update_position()
         elif self.comando == "Increase Bus":
             self.item.setSelected(True)
             self.scene.increase_bus()
 
-        # self.count = 0
 
 
 
@@ -740,7 +586,7 @@ class command(QtGui.QUndoCommand):
             # self.item.w1.edge_counter -= 1
             # self.item.w2.edge_counter -= 1
             self.scene.removeItem(self.item)
-            self.scene.removeItem(self.item.GhostRetItem)
+            # self.scene.removeItem(self.item.GhostRetItem)
         elif self.comando == "Increase Bus":
             self.item.setSelected(True)
             self.scene.decrease_bus()
@@ -787,8 +633,31 @@ class SceneWidget(QtGui.QGraphicsScene):
             Este metodo define as acoes realizadas quando um evento do tipo
             mousePress e detectado no diagrama grafico
         '''
+        super(SceneWidget, self).mousePressEvent(mouse_event)
         self.pressPos = mouse_event.scenePos()
+        self.break_mode = 2
+        self.edge_broken = None
+
         if (mouse_event.button() != QtCore.Qt.LeftButton):
+            node_priority = False
+            self.clearSelection()
+            ell = QtGui.QGraphicsEllipseItem()
+            ell.setRect(QtCore.QRectF(mouse_event.scenePos() - QtCore.QPointF(10,10), QtCore.QSizeF(30,30)))
+            self.addItem(ell)
+
+            for item in self.items():
+                if ell.collidesWithItem(item):
+                    if isinstance(item, Node):
+                        node_priority = True
+
+            for item in self.items():
+                if ell.collidesWithItem(item) and isinstance(item, Edge) and not node_priority:
+                    self.removeItem(ell)
+                    item.setSelected(True)
+                    item.myEdgeMenu.exec_(mouse_event.screenPos())
+                    item.setSelected(False)
+                    return
+            self.removeItem(ell)
             return
         item_oculto = None
         for item in self.items():
@@ -815,36 +684,43 @@ class SceneWidget(QtGui.QGraphicsScene):
             self.itemInserted.emit(self.myItemType)
 
         elif self.myMode == self.InsertLine:
-            passe = False
-            add = True
+            ell = QtGui.QGraphicsEllipseItem()
+            ell.setRect(QtCore.QRectF(mouse_event.scenePos() - QtCore.QPointF(10,10), QtCore.QSizeF(30,30)))
+            self.addItem(ell)
             node_priority = False
+            edge_collision, node_collision, ellipse_collision = range(3)
+            collision = None
             for item in self.items(mouse_event.scenePos()):
                 if isinstance(item, Node):
                     node_priority = True
             for item in self.items():
-                if item.isUnderMouse():
-                    if isinstance(item, GhostR) and not node_priority:
+                if ell.collidesWithItem(item):
+                    if isinstance(item, Edge) and not node_priority:
 
-                        c_pos = (
-                            item.edge.line().p1() + item.edge.line().p2()) / 2
-                        self.no = Node(Node.NoConectivo, self.myLineMenu)
-                        self.addItem(self.no)
-                        self.no.setPos(c_pos - QtCore.QPointF(3.5, 3.5))
-                        item.no = self.no
-                        self.ghost = item
-                        # self.start_item_is_ghost = True
-                        passe = True
-                    elif isinstance(item,Node) or isinstance(item, Edge) and node_priority:
-                        add = False
-            if passe is True:
-                self.l0 = c_pos
-            else:
-                self.l0 = mouse_event.scenePos()
+                        self.c_pos = (
+                            item.line().p1() + item.line().p2()) / 2
+                        collision = edge_collision
+                        self.break_mode = 0
+                        self.edge_broken = item
+
+                    elif isinstance(item, Node):
+                        collision = node_collision
+                        self.start_item = item
+                    elif isinstance(item, QtGui.QGraphicsEllipseItem):
+                        collision = ellipse_collision
+            self.l0 = mouse_event.scenePos()
+            if collision == edge_collision:
                 self.no = Node(Node.NoConectivo, self.myLineMenu)
-                if add is True:
-                    self.addItem(self.no)
+                self.addItem(self.no)
+                self.no.setPos(self.c_pos - QtCore.QPointF(3.5, 3.5))
+                self.start_item = self.no
+                self.l0 = self.c_pos
+
+            elif collision == ellipse_collision:
+                self.no = Node(Node.NoConectivo, self.myLineMenu)
+                self.addItem(self.no)
                 self.no.setPos(mouse_event.scenePos())
-                self.no_origem = self.no
+                self.start_item = self.no
             self.line = QtGui.QGraphicsLineItem(
                 QtCore.QLineF(
                     self.l0,
@@ -852,6 +728,9 @@ class SceneWidget(QtGui.QGraphicsScene):
             self.line.setPen(
                 QtGui.QPen(QtCore.Qt.black, 2))
             self.addItem(self.line)
+            self.removeItem(ell)
+            print "start item:"
+            print self.start_item
 
         elif self.myMode == self.InsertText:
             text_item = Text()
@@ -866,12 +745,12 @@ class SceneWidget(QtGui.QGraphicsScene):
             self.textInserted.emit(text_item)
         elif self.myMode == self.SelectItems:
             selection = True
-            for item in self.items():
-                if item.isUnderMouse():
-                    if isinstance(item,GhostR):
-                        selection = True
-                    else:
-                        selection = False
+            # for item in self.items():
+            #     if item.isUnderMouse():
+            #         if isinstance(item,GhostR):
+            #             selection = True
+            #         else:
+            #             selection = False
             if selection:
                 init_point = mouse_event.scenePos()
                 self.selectRect = QtGui.QGraphicsRectItem(
@@ -879,7 +758,39 @@ class SceneWidget(QtGui.QGraphicsScene):
                 self.selectRect.setPen(
                     QtGui.QPen(QtCore.Qt.red, 2, QtCore.Qt.DashLine))
                 self.addItem(self.selectRect)
-        super(SceneWidget, self).mousePressEvent(mouse_event)
+
+        else:
+            super(SceneWidget, self).mousePressEvent(mouse_event)
+            priority_on = False
+            priority_node = False
+            ell = QtGui.QGraphicsEllipseItem()
+            ell.setRect(QtCore.QRectF(mouse_event.scenePos() - QtCore.QPointF(10,10), QtCore.QSizeF(30,30)))
+            self.addItem(ell)
+            for item in self.items():
+                if ell.collidesWithItem(item):
+                    if isinstance(item, Node) or isinstance(item, Edge):
+                        if isinstance(item, Node):
+                            priority_node = True
+                        priority_on = True
+                        print priority_on
+            for item in self.items():
+                if ell.collidesWithItem(item):
+                    if isinstance(item, QtGui.QGraphicsEllipseItem) and not priority_on:
+                        self.clearSelection()
+                    elif isinstance(item, Node):
+                        self.removeItem(ell)
+                        self.clearSelection()
+                        item.setSelected(True)
+                        print "lets check"
+                    elif isinstance(item, Edge) and not priority_node:
+                        self.removeItem(ell)
+                        self.clearSelection()
+                        item.setSelected(True)
+                        print "lets check"                        
+                        return
+            self.removeItem(ell)
+            print "opa"
+        
 
         return
 
@@ -909,282 +820,130 @@ class SceneWidget(QtGui.QGraphicsScene):
         '''
 
         if self.myMode == self.InsertLine and self.line:
+            node_priority = False
+            edge_priority = False
+            block_on = False
             self.removeItem(self.no)
-            permit1 = True
-            permit2 = True
-            start_pop = None
-            end_pop = None
+            # if self.start_item.myItemType == Node.NoConectivo:
+            #     self.addItem(self.start_item)
+            ell = QtGui.QGraphicsEllipseItem()
+            ell.setRect(QtCore.QRectF(mouse_event.scenePos() - QtCore.QPointF(10,10), QtCore.QSizeF(30,30)))
+            self.addItem(ell)
 
-            # Associa a start_items todos os itens que se encontram na posição
-            # inicial de aperto do mouse
-            start_items = self.items(self.line.line().p1())
-
-            # Se há pelo menos um item nesta posição E o primeiro item da lista
-            # é a própria linha traçada ou um retângulo fantasma, retire este item
-            # da lista.
-            if len(start_items) > 0 and (start_items[0] == self.line or isinstance(start_items[0], GhostR)):
-                start_pop = start_items.pop(0)
-
-            # Se há pelo menos dois itens nesta posição, testa-se: se o item é
-            # um retângulo fantasma, retira-o da lista, salvando-o na variável
-            # start_pop. Se o item for do tipo Edge, este também é retirado da
-            # lista, mas destruído.
-            if len(start_items) > 1:
-                for item in start_items:
-                    if isinstance(item, GhostR):
-                        start_pop = item
-                        start_items.remove(item)
-                for item in start_items:
-                    if isinstance(item, Edge):
-                        start_items.remove(item)
-
-            # Se na posição clicada não houver itens, testa-se: se o item salvo
-            # start_pop não for inexistente e for um retângulo fantasma, segue
-            # que o usuário está inserindo um nó conectivo entre dois extremos
-            # de uma linha. Este nó é então inserido na posição média entre os
-            # extremos e definido como start_item. A flag start_item_is_ghost 
-            # é então colocada como verdadeira. Caso contrário, o nó é inserido
-            # na posição em que o mouse foi apertado.
-            if len(start_items) == 0:
-                if isinstance(start_pop, GhostR) and start_pop is not None:
-                    c_pos = (start_pop.edge.line().p1() + start_pop.edge.line().p2()) / 2
-                    start_item = Node(Node.NoConectivo, self.myLineMenu)
-                    # self.addItem(start_item)
-                    start_item.setPos(c_pos)
-                    self.start_item_is_ghost = True
-                    print "Connectivity Node Inserted in the middle of an Edge"
-                else:
-                    start_item = Node(Node.NoConectivo, self.myLineMenu)
-                    # self.addItem(start_item)
-                    start_item.setPos(self.pressPos)
-                    print "Connectivity Node inserted in a random position"
-
-            # Se após as remoções ainda houver pelo menos um item na posição,
-            # este tem que ser do tipo Node, e então o start_item é definido
-            # como este item.
-            if len(start_items):
-                start_item = start_items[0]
-                print "First item is a Node"
-
-            # Procedimento semelhante é aplicado ao ponto final. Associa-se
-            # à lista end_items os itens que estão na posição no momento que
-            # o botão do mouse é solto.
-            end_items = self.items(self.line.line().p2())
-            # Se há somente um item nesta lista e este é uma linha ou um
-            # retângulo fantasma, retira-se este item da lista.
-            if len(end_items) and (end_items[0] == self.line or isinstance(end_items[0], GhostR)):
-                end_pop = end_items.pop(0)
-
-            # Na prática só é possível haver um item na posição final. Se este
-            # for um retângulo fantasma, este item é salvo em end_pop
-            for item in end_items:
-                if isinstance(item, GhostR):
-                    end_pop = item
-
-            # Se após a remoção não houver nenhum item restante, significa que
-            # a posição final ocorreu em um canto qualquer da tela. Ou seja, um
-            # nó conectivo é criado nesta posição
-            if len(end_items) == 0:
-                end_item = Node(Node.NoConectivo, self.myLineMenu)
-                # self.addItem(end_item)
-                end_item.setPos(mouse_event.scenePos())
-                print "Connectivity Node inserted in final position"
-
-            # Se restar um item na lista end_items, é feito um teste: se este
-            # item for um retângulo fantasma, significa que um nó será criado
-            # entre dois extremos de uma linha. Ou seja,um nó conectivo é
-            # criado no ponto médio destes extremos. Caso contrário, o end_item
-            # é definido como o Node final atingido.
-            if len(end_items):
-                if isinstance(end_pop, GhostR):
-                    c_pos = (end_pop.edge.line().p1() + end_pop.edge.line().p2()) / 2
-                    end_item = Node(Node.NoConectivo, self.myLineMenu)
-                    # self.addItem(end_item)
-                    end_item.setPos(c_pos)
-                    self.ghost = end_pop
-                    self.end_item_is_ghost = True
-                    print "Connectivity Node inserted on the middle of a final Edge"
-                else:
-                    end_item = end_items[0]
-
-            # Caso, ao fim desta atribuição, o start_item e o end_item forem
-            # iguais, ou a posição de início e fim também o forem, a linha é
-            # removida. Se o start_item/end_item for um nó conectivo, é testado
-            # quantas ligações este possui, a fim de não comprometer o resto
-            # do diagrama. O start/end _item é removido se possuir 0 ligações.
-            # Caso o item não seja um nó conectivo, a linha é simplesmente
-            # removida e a função retorna.
-            print "start_pop"
-            print start_pop
-            print "end_pop"
-            print end_pop
-
-            if start_item == end_item or start_item.scenePos() == end_item.scenePos():
-                if isinstance(start_item, Node):
-                    if start_item.myItemType != Node.NoConectivo:
-                        self.removeItem(self.line)
-                        self.line = None
-                        return
-                if isinstance(end_item, Node):
-                    if end_item.myItemType != Node.NoConectivo:
-                        self.removeItem(self.line)
-                        self.line = None
-                        return
-                if start_item.edge_counter == 0:
-                    self.removeItem(start_item)
-                if end_item.edge_counter == 0:
+            # Testes preliminares do start_item
+            if self.start_item.myItemType == Node.Barra:
+                block_on = True
+            if self.start_item.myItemType == Node.Religador:
+                if len(self.start_item.edges) >= 2:
                     self.removeItem(self.line)
-                self.line = None
-                print "Line not created: Same point or item"
-                return
-            # A linha parcial é removida.
+                    self.line = None
+                    self.removeItem(ell)
+                    return
+
+            # Estabelecimento do end_item
+            for item in self.items():
+                if item.isUnderMouse():
+                    if isinstance(item, Node):
+                        node_priority = True
+
+            for item in self.items():
+                if ell.collidesWithItem(item):
+                    if isinstance(item, Edge):
+                        edge_priority = True
+
+            for item in self.items():
+                if ell.collidesWithItem(item):
+
+                    if isinstance(item, Node):
+                        if item.myItemType == Node.Religador:
+                            if len(item.edges) >= 2:
+                                self.removeItem(self.line)
+                                self.line = None
+                                self.removeItem(ell)
+                                return
+                        if block_on is True:
+                            for edge in item.edges:
+                                if edge.w1.myItemType == Node.Barra or edge.w2.myItemType == Node.Barra:
+                                    self.removeItem(self.line)
+                                    self.line = None
+                                    self.removeItem(ell)
+                                    return
+                        self.end_item = item
+                        print "checkpoint 1"
+
+                    elif isinstance(item, Edge) and not node_priority:
+                        if block_on is True:
+                            self.removeItem(self.line)
+                            self.line = None
+                            self.removeItem(ell)
+                            return
+                        c_pos = (item.line().p1() + item.line().p2()) / 2
+                        self.end_item = Node(Node.NoConectivo, self.myLineMenu)
+                        self.end_item.setPos(c_pos + QtCore.QPointF(-3.5, -3.5))
+                        self.break_mode = 1
+                        self.edge_broken = item
+                        print "checkpoint 2"
+                    elif isinstance(item, QtGui.QGraphicsEllipseItem) and not node_priority and not edge_priority:
+                        self.end_item = Node(Node.NoConectivo, self.myLineMenu)
+                        self.end_item.setPos(mouse_event.scenePos())
+                        print "checkpoint 3"
+
             self.removeItem(self.line)
             self.line = None
-            print "start"
-            print start_item
-            print "end"
-            print end_item
+            self.removeItem(ell)
 
-            # >>>>>>>>>>>Testes referentes ao start_item e end_item<<<<<<<<<<<
+            # Testes posteriores do start_item e end_item
+            if self.start_item.myItemType == Node.Barra:
+                if self.end_item.myItemType == Node.NoConectivo:
+                    self.removeItem(self.end_item)
+                    self.end_item = Node(Node.Religador, self.myRecloserMenu)
+                    self.addItem(self.end_item)
+                    self.end_item.setPos(mouse_event.scenePos())
 
-            # Se o start_item for do tipo Node, testa-se. Sendo um religador
-            # ou uma subestação, testa-se se ele já possui o número máximo
-            # de ligações (2). Se sim, retorna. Se não, testa-se se o end_item
-            # é um nó conectivo. Se sim, adiciona este nó definitivamente na
-            # cena. Obs: se o comprimento da ligação for curto demais, a linha
-            # não é criada.
-            if isinstance(start_item, Node):
-                dist = math.sqrt(
-                                pow(
-                                    (self.pressPos.x()
-                                        - end_item.scenePos().x()), 2)
-                                + pow(
-                                    (self.pressPos.y()
-                                     - end_item.scenePos().y()), 2))
-                if dist < 115:
-                    return
-                if start_item.myItemType == Node.Religador or start_item.myItemType == Node.Subestacao:
-                    if len(start_item.edges) > 1:
-                        return
-                    if end_item.myItemType == Node.NoConectivo:
-                        self.addItem(end_item)
-                    if end_item.myItemType == Node.Religador or end_item.myItemType == Node.Subestacao:
-                        if len(end_item.edges) > 1:
-                            return
-                # Se o start_item for um nó de carga, simplesmente adicione
-                # o end_item à cena
-                if start_item.myItemType == Node.NoDeCarga:
-                    self.addItem(end_item)
+            if self.end_item.myItemType == Node.Barra:
+                if self.start_item.myItemType == Node.NoConectivo:
+                    self.removeItem(self.start_item)
+                    self.start_item = Node(Node.Religador, self.myRecloserMenu)
+                    self.addItem(self.start_item)
+                    self.start_item.setPos(self.pressPos)
 
-                if start_item.myItemType == Node.Barra:
-                    if end_item.myItemType == Node.NoConectivo:
-                        for item in self.items():
-                            if item.isUnderMouse():
-                                print "bateu"
-                                return
-                        end_item = Node(Node.Religador, self.myRecloserMenu)
-                        self.addItem(end_item)
-                        end_item.setPos(mouse_event.scenePos())
-                        comando = command("Add Item", self, end_item, end_item.scenePos())
-                        self.undoStack.push(comando)
 
-                    #if end_item.myItemType == Node.Barra:
-                        
+            # Teste de comprimento de linha
+            dist = math.sqrt(
+                math.pow(
+                    self.start_item.pos().x() -
+                    self.end_item.pos().x(), 2) + math.pow(
+                    self.start_item.pos().y() - self.end_item.pos().y(), 2))
+            if dist < 115:
+                print "Erro: Comprimento da ligação muito pequeno!"
+                return
+            if self.edge_broken is not None and self.edge_broken.isPermanent:
+                return
 
-                # Se o start_item for um nó conectivo, testa-se: se o end_item
-                # não for um nó conectivo, o start_item pode ser adicionado.
-                # É verificado então se o end_item é uma barra. Se for este
-                # o caso, é adicionado um religador automaticamente, no lugar
-                # do nó conectivo. Caso contrário, se o end_item for outro
-                # nó conectivo, os dois itens são adicionados à cena.
-                if start_item.myItemType == Node.NoConectivo:
-                    if end_item.myItemType != Node.NoConectivo:
-                        if end_item.myItemType == Node.Barra:
-                            start_item = Node(
-                                Node.Religador, self.myRecloserMenu)
-                            self.addItem(start_item)
-                            start_item.setPos(self.pressPos)
-                            # comando = command("Add Item", self, start_item, start_item.scenePos())
-                            # self.undoStack.push(comando)
-                        if end_item.myItemType == Node.Religador or end_item.myItemType == Node.Subestacao:
-                            if len(end_item.edges) > 1:
-                                return
-                        self.addItem(start_item)
-                        # comando = command("Add Item", self, start_item, start_item.scenePos())
-                        # self.undoStack.push(comando)
-                    else:
-                        self.addItem(start_item)
-                        # comando = command("Add Item", self, start_item, start_item.scenePos())
-                        # self.undoStack.push(comando)
-                        self.addItem(end_item)
-                        # comando = command("Add Item", self, end_item, end_item.scenePos())
-                        # self.undoStack.push(comando)
+            self.addItem(self.start_item)
+            self.addItem(self.end_item)
 
-            # Criação da edge definitiva
-            edge = Edge(start_item, end_item, self.myLineMenu)
+            edge = Edge(self.start_item, self.end_item, self.myLineMenu)
             self.addItem(edge)
+            print "scene:"
+            print edge.scene()
             edge.set_color(QtCore.Qt.black)
-            self.addItem(edge.GhostRetItem)
+            # self.addItem(edge.GhostRetItem)
             edge.update_position()
-            comando = command("Add Line", self, edge, None)
-            self.undoStack.push(comando)
+            print "b mode"
+            print self.break_mode
+            #Teste de quebra de linha
+            self.break_edge(self.edge_broken, self.break_mode)
+
+
+            # comando = command("Add Line", self, edge, None)
+            # self.undoStack.push(comando)
 
             if edge.w1.myItemType == Node.NoConectivo:
                 aux = edge.w1
                 edge.w1 = edge.w2
                 edge.w2 = aux
 
-            if self.start_item_is_ghost:
-                self.break_edge(start_item)
-                print "start is ghost, so break line"
-                print start_item
-                self.ghost = None
-            if self.end_item_is_ghost:
-                self.break_edge(end_item)
-                print "end is ghost, so break line"
-                self.ghost = None
-
-            # Teste: Se a linha criada for muito
-            # pequena, o programa retorna sem nenhuma
-            # edge criada. Se o tamanho for satisfatório,
-            # o item edge é adicionado a cena.
-            # if edge.line().length() < 60:
-            #     self.removeItem(edge)
-            #     self.removeItem(start_item)
-            #     self.removeItem(end_item)
-            #     self.removeItem(self.no)
-            #     return
-            # else:
-            #     self.addItem(edge)
-
-            # Se um dos itens conectados for um Node, a flag
-            # inserted é setada
-
-            # Realiza o update da posição da edge,
-            # assim como seu elipse fantasma associado.
-            # edge.update_position()
-            # self.addItem(edge.GhostRetItem)
-            # edge.update_ret()
-            # self.update(0, 0, 800, 800)
-
-            # Se a conexão for entre dois nós ou entre uma linha
-            # e um nó, a linha é separada
-            # if inserted is False and self.no is not None:
-            #     self.break_edge()
-            #     print "oi 1"
-            #     new_node = Node(Node.NoConectivo, self.myLineMenu)
-            #     self.addItem(new_node)
-            #     new_node.setPos(mouse_event.scenePos())
-            #     new_edge = Edge(self.no, new_node, self.myLineMenu)
-            #     self.addItem(new_edge)
-            #     new_edge.update_position()
-            #     self.addItem(new_edge.GhostRetItem)
-            #     new_edge.update_ret()
-            #     self.update(0, 0, 800, 800)
-
-            # if self.no is not None and inserted is True and self.ghost is not None:
-            #     self.break_edge(edge.w1,edge.w2)
-            #     print "opa"
             for item in self.selectedItems():
                 item.setSelected(False)
 
@@ -1196,10 +955,17 @@ class SceneWidget(QtGui.QGraphicsScene):
             self.setSelectionArea(path)
             self.removeItem(self.selectRect)
             self.selectRect = None
+            for item in self.selectedItems():
+                if isinstance(item, Edge):
+                    if item.w1.myItemType == Node.NoConectivo or item.w1.myItemType == Node.Barra:
+                        item.w1.setSelected(True)
+                    if item.w2.myItemType == Node.NoConectivo or item.w2.myItemType == Node.Barra:
+                        item.w2.setSelected(True)
         self.line = None
         self.itemInserted.emit(3)
         self.ghost = None
         super(SceneWidget, self).mouseReleaseEvent(mouse_event)
+        print "END SCENE"
 
         #     Problema quando tenta-se modificar o texto dos componentes
     def keyPressEvent(self, event):
@@ -1232,25 +998,25 @@ class SceneWidget(QtGui.QGraphicsScene):
                 item.setSelected(False)
         else:
             pass
-            super(SceneWidget, self).keyPressEvent(self, event)
+            super(SceneWidget, self).keyPressEvent(event)
         return
-    def break_edge(self, end_newline):
-        print "remove fantasma"
-        self.removeItem(self.ghost.edge.GhostRetItem)
-        print "remove linha"
-        self.removeItem(self.ghost.edge)
-        self.ghost.edge.w1.remove_edge(self.ghost.edge)
-        self.ghost.edge.w2.remove_edge(self.ghost.edge)
-        new_edge_1 = Edge(self.ghost.edge.w1, end_newline, self.myLineMenu)
-        new_edge_2 = Edge(self.ghost.edge.w2, end_newline, self.myLineMenu)
+
+    def break_edge(self, edge, mode, insert = None):
+        if mode == 3:
+            break_point = insert 
+        if mode == 2:
+            return
+        if mode == 0:
+            break_point = self.start_item
+        if mode == 1:
+            break_point = self.end_item
+        self.removeItem(edge)
+        new_edge_1 = Edge(edge.w1, break_point, self.myLineMenu)
+        new_edge_2 = Edge(break_point, edge.w2, self.myLineMenu)
         self.addItem(new_edge_1)
         self.addItem(new_edge_2)
-        self.addItem(new_edge_1.GhostRetItem)
-        self.addItem(new_edge_2.GhostRetItem)
         new_edge_1.update_position()
         new_edge_2.update_position()
-        new_edge_1.update_ret()
-        new_edge_2.update_ret()
 
     def recover_edge(self, item):
         w = []
@@ -1353,7 +1119,7 @@ class SceneWidget(QtGui.QGraphicsScene):
                 if item.w2.myItemType == Node.NoConectivo:
                     item.w2.remove_edges()
                     self.removeItem(item.w2)
-                self.removeItem(item.GhostRetItem)
+                # self.removeItem(item.GhostRetItem)
             self.removeItem(item)
 
 
@@ -1436,13 +1202,25 @@ class SceneWidget(QtGui.QGraphicsScene):
                     item.rect().height() / 1.25)
 
     def align_line_h(self):
+        w1_is_locked = False
+        w2_is_locked = False
         for item in self.selectedItems():
             if isinstance(item, Edge):
-                if item.w2.bar is True or item.w2.y() < item.w1.y():
-                    pos_y = item.w2.center().y()
-                    pos = QtCore.QPointF(item.w1.center().x(), item.w2.center().y() )
+                for edge in item.w1.edges:
+                    if edge.w1.myItemType == Node.Barra or edge.w2.myItemType == Node.Barra:
+                        w1_is_locked = True
+                for edge in item.w2.edges:
+                    if edge.w1.myItemType == Node.Barra or edge.w2.myItemType == Node.Barra:
+                        w2_is_locked = True
+                if w1_is_locked and not w2_is_locked:
+                    pos = QtCore.QPointF(item.w2.center().x(), item.w1.center().y())
+                    item.w2.setCenter(pos)
+                    item.update_position()
+                if w2_is_locked and not w1_is_locked:
+                    pos = QtCore.QPointF(item.w1.center().x(), item.w2.center().y())
                     item.w1.setCenter(pos)
                     item.update_position()
+
                 else:
                     pos = QtCore.QPointF(item.w2.center().x(), item.w1.center().y())
                     item.w2.setCenter(pos)
@@ -1464,13 +1242,40 @@ class SceneWidget(QtGui.QGraphicsScene):
                 item.update_ret()
 
     def h_align(self):
+        fix = False
+        fixed_items = []
+        first_priority = False
+        has_pos_priority = False
+        has_bar_priority = False
         y_pos_list = []
-        # y_check_pos_list=[]
-        # done = 0
-        # dif = 0
         for item in self.selectedItems():
             if isinstance(item, Node):
-                y_pos_list.append(item.pos().y())
+                if item.myItemType == Node.Religador:
+                    has_pos_priority = True
+                    pos_item = item.pos().y()
+                if item.myItemType == Node.Barra and item.bar_busy is True:
+                    has_bar_priority = True
+                    pos_barra = item.pos().y()
+
+        for item in self.selectedItems():
+            if isinstance(item, Node):
+                if item.myItemType != Node.Barra:
+                    if has_bar_priority:
+                        continue
+                else:
+                    y_pos_list.append(item.pos().y())
+                    continue
+
+                if item.myItemType == Node.NoConectivo:
+                    if has_pos_priority:
+                        continue
+                    else:
+                        y_pos_list.append(item.pos().y())
+                else:
+                    y_pos_list.append(item.pos().y())
+
+        print len(y_pos_list)
+        print y_pos_list
         max_pos = max(y_pos_list)
         min_pos = min(y_pos_list)
         mean_pos = max_pos - abs(max_pos - min_pos) / 2.0
@@ -1478,11 +1283,68 @@ class SceneWidget(QtGui.QGraphicsScene):
         for item in self.selectedItems():
             if isinstance(item, Node):
                 if item.Fixed is True:
-                    mean_pos = item.pos().y()
+                        mean_pos = item.pos().y()
+                        item.mean_pos = mean_pos
+                        first_priority = True
+
+
+
+        print "mean_pos"
+        print mean_pos
 
         for item in self.selectedItems():
             if isinstance(item, Node):
-                item.setY(mean_pos)
+                pos = mean_pos
+                print "===========COMEÇO LOOP=================="
+                print has_bar_priority, has_pos_priority, first_priority
+
+                if item.Fixed is True:
+                    continue
+
+                # for edge in item.edges:
+                #     if edge.w1.Fixed:
+                #         pos = edge.w1.mean_pos
+                #         item.mean_pos = pos
+                #         item.semiFixed = True
+
+                #     if edge.w1.semiFixed:
+                #         pos = edge.w1.mean_pos
+                #         item.mean_pos = pos
+                #         item.semiFixed = True
+                        
+                #     if edge.w2.Fixed:
+                #         pos = edge.w2.mean_pos
+                #         item.mean_pos = pos
+                #         item.semiFixed = True
+
+                #     if edge.w2.semiFixed:
+                #         pos = edge.w2.mean_pos
+                #         item.mean_pos = pos
+                #         item.semiFixed = True
+
+                if has_bar_priority is True and item.myItemType == Node.Subestacao:
+                    pos = pos_barra + 25
+
+                elif has_pos_priority:
+                    pos = pos_item
+
+                if item.myItemType == Node.NoConectivo:
+                    print "no conectivo"
+                    pos = pos + 17
+
+                if item.myItemType == Node.NoDeCarga:
+                    pos = pos + 15
+
+                if item.myItemType == Node.Barra:
+                    print "Node Barra"
+                    pos = pos_barra
+
+                item.setY(pos)
+                print "===========FIM LOOP=================="
+        print mean_pos
+
+
+
 
         for item in self.selectedItems():
             if isinstance(item, Edge):
