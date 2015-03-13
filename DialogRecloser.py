@@ -20,18 +20,24 @@ class RecloserDialog(QtGui.QWidget):
 
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(396, 222) 
+        Dialog.resize(380, 210)
+        #Define o tamanho da caixa dialogo 
         self.buttonBox = QtGui.QDialogButtonBox(Dialog)
-        self.buttonBox.setGeometry(QtCore.QRect(150, 180, 181, 32))
+        self.buttonBox.setGeometry(QtCore.QRect(0, 170, 341, 32))
+        #Define o tamanho do layout dos botões do dialogo
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
         self.formLayoutWidget = QtGui.QWidget(Dialog)
-        self.formLayoutWidget.setGeometry(QtCore.QRect(20, 30, 341, 128))
+        self.formLayoutWidget.setGeometry(QtCore.QRect(10, 10, 350, 150))
+        #Define a localização do layout das propriedades (coordenada x do ponto, coordenada y do ponto, dimensão em x, dimensão em y)
         self.formLayoutWidget.setObjectName("formLayoutWidget")
         self.formLayout = QtGui.QFormLayout(self.formLayoutWidget)
         self.formLayout.setContentsMargins(0, 0, 0, 0)
         self.formLayout.setObjectName("formLayout")
+
+
+        #definição da propriedade NOME
         self.identificaOLabel = QtGui.QLabel(self.formLayoutWidget)
         self.identificaOLabel.setObjectName("identificaOLabel")
         self.formLayout.setWidget(0, QtGui.QFormLayout.LabelRole, self.identificaOLabel)
@@ -39,6 +45,16 @@ class RecloserDialog(QtGui.QWidget):
         self.identificaOLineEdit.setObjectName("identificaOLineEdit")
         self.identificaOLineEdit.setPlaceholderText(str(self.item.chave.nome))
         self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.identificaOLineEdit)
+
+        self.testeLabel = QtGui.QLabel(self.formLayoutWidget)
+        self.testeLabel.setObjectName("testeLabel")
+        self.formLayout.setWidget(4, QtGui.QFormLayout.LabelRole, self.testeLabel)
+        self.testeLineEdit = QtGui.QComboBox(self.formLayoutWidget)
+        self.testeLineEdit.setObjectName("testeEdit")
+        self.testeLineEdit.addItems(["Configuration 1", "Configuration 2", "Configuration 3"])
+        self.formLayout.setWidget(4, QtGui.QFormLayout.FieldRole, self.testeLineEdit)
+
+        #definição da propriedade CORRENTE NOMINAL
         self.correnteNominalLabel = QtGui.QLabel(self.formLayoutWidget)
         self.correnteNominalLabel.setObjectName("correnteNominalLabel")
         self.formLayout.setWidget(1, QtGui.QFormLayout.LabelRole, self.correnteNominalLabel)
@@ -46,6 +62,9 @@ class RecloserDialog(QtGui.QWidget):
         self.correnteNominalLineEdit.setObjectName("correnteNominalLineEdit")
         self.correnteNominalLineEdit.setPlaceholderText(str(self.item.chave.ratedCurrent))
         self.formLayout.setWidget(1, QtGui.QFormLayout.FieldRole, self.correnteNominalLineEdit)
+
+
+        #definição da propriedade CAPACIDADE DE INTERRUPÇÃO
         self.capacidadeDeInterrupOLabel = QtGui.QLabel(self.formLayoutWidget)
         self.capacidadeDeInterrupOLabel.setObjectName("capacidadeDeInterrupOLabel")
         self.formLayout.setWidget(2, QtGui.QFormLayout.LabelRole, self.capacidadeDeInterrupOLabel)
@@ -53,6 +72,9 @@ class RecloserDialog(QtGui.QWidget):
         self.capacidadeDeInterrupOLineEdit.setObjectName("capacidadeDeInterrupOLineEdit")
         self.capacidadeDeInterrupOLineEdit.setPlaceholderText(str(self.item.chave.breakingCapacity))
         self.formLayout.setWidget(2, QtGui.QFormLayout.FieldRole, self.capacidadeDeInterrupOLineEdit)
+
+
+        #definição da propriedade Nº DE SEQUENCIA DE RELIGAMENTO
         self.nDeSequNciasDeReligamentoLabel = QtGui.QLabel(self.formLayoutWidget)
         self.nDeSequNciasDeReligamentoLabel.setObjectName("nDeSequNciasDeReligamentoLabel")
         self.formLayout.setWidget(3, QtGui.QFormLayout.LabelRole, self.nDeSequNciasDeReligamentoLabel)
@@ -67,12 +89,14 @@ class RecloserDialog(QtGui.QWidget):
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
+
+        #Tradução dos nomes dados aos objetos para os nomes gráficos do programa
         Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "Religador - Propriedades", None, QtGui.QApplication.UnicodeUTF8))
         self.identificaOLabel.setText(QtGui.QApplication.translate("Dialog", "Identificação:", None, QtGui.QApplication.UnicodeUTF8))
         self.correnteNominalLabel.setText(QtGui.QApplication.translate("Dialog", "Corrente Nominal (A): ", None, QtGui.QApplication.UnicodeUTF8))
         self.capacidadeDeInterrupOLabel.setText(QtGui.QApplication.translate("Dialog", "Capacidade de Interrupção (kA):", None, QtGui.QApplication.UnicodeUTF8))
         self.nDeSequNciasDeReligamentoLabel.setText(QtGui.QApplication.translate("Dialog", "Nº de Sequências de Religamento:", None, QtGui.QApplication.UnicodeUTF8))
-
+        self.testeLabel.setText(QtGui.QApplication.translate("Dialog", "Teste:", None, QtGui.QApplication.UnicodeUTF8))
 
     if __name__ == '__main__':
         app = QtGui.QApplication(sys.argv)

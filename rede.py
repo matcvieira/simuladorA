@@ -474,12 +474,13 @@ class BusBarSection(object):
 
 class Transformador(object):
 
-    def __init__(self, tensao_primario, tensao_secundario, potencia, impedancia):
+    def __init__(self, nome, tensao_primario, tensao_secundario, potencia, impedancia):
         assert isinstance(tensao_secundario, float), 'O parâmetro tensao_secundario deve ser do tipo float'
         assert isinstance(tensao_primario, float), 'O parâmetro tensao_primario deve ser do tipo float'
         assert isinstance(potencia, float), 'O parâmetro potencia deve ser do tipo float'
         assert isinstance(impedancia, complex), 'O parâmetro impedancia deve ser do tipo complex'
 
+        self.nome = nome
         self.tensao_primario = tensao_primario
         self.tensao_secundario = tensao_secundario
         self.potencia = potencia
