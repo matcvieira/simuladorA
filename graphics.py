@@ -320,6 +320,7 @@ class Node(QtGui.QGraphicsRectItem):
             # definine e ajusta a posicao do label do item grafico
             self.text = Text('Religador', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
+            self.custom_dict = {'Corrente Nominal': 0, 'Capacidade de Interrupcao': 0, 'Sequencia':0}
             self.create_dict(10,15,4,'ABB')
             self.create_dict(12,10,3,'SEL')
             self.create_dict(9,11,2,'BOSCH')

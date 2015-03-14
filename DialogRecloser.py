@@ -26,10 +26,10 @@ class RecloserDialog(QtGui.QWidget):
         self.buttonBox.setGeometry(QtCore.QRect(0, 170, 341, 32))
         #Define o tamanho do layout dos botões do dialogo
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.apply = QtGui.QDialogButtonBox.Apply
-        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok|self.apply)
+        #self.apply = QtGui.QDialogButtonBox.Apply
+        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok|QtGui.QDialogButtonBox.Save)
         self.buttonBox.setObjectName("buttonBox")
-        self.buttonBox.clicked.connect(self.update_values)
+        # self.buttonBox.clicked.connect(self.update_values)
         print self.buttonBox.buttons
         self.formLayoutWidget = QtGui.QWidget(Dialog)
         self.formLayoutWidget.setGeometry(QtCore.QRect(10, 10, 350, 150))
@@ -46,7 +46,8 @@ class RecloserDialog(QtGui.QWidget):
         self.testeLineEdit = QtGui.QComboBox(self.formLayoutWidget)
         self.testeLineEdit.setObjectName("testeEdit")
         print self.item.dict_prop.keys()
-        self.testeLineEdit.addItems(self.item.dict_prop.keys() + ['Custom Configuration'])
+        self.testeLineEdit.insertItem(0,'Custom')
+        self.testeLineEdit.addItems(self.item.dict_prop.keys())
         self.formLayout.setWidget(4, QtGui.QFormLayout.FieldRole, self.testeLineEdit)
         self.testeLineEdit.currentIndexChanged.connect(self.update_values)
 
@@ -57,7 +58,7 @@ class RecloserDialog(QtGui.QWidget):
         self.formLayout.setWidget(0, QtGui.QFormLayout.LabelRole, self.identificaOLabel)
         self.identificaOLineEdit = QtGui.QLineEdit(self.formLayoutWidget)
         self.identificaOLineEdit.setObjectName("identificaOLineEdit")
-        self.identificaOLineEdit.setPlaceholderText('Identifica0')
+        self.identificaOLineEdit.setText(self.item.chave.nome)
         self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.identificaOLineEdit)
 
 
@@ -80,6 +81,7 @@ class RecloserDialog(QtGui.QWidget):
         self.capacidadeDeInterrupOLineEdit.setObjectName("capacidadeDeInterrupOLineEdit")
         self.capacidadeDeInterrupOLineEdit.setText(str(self.item.chave.breakingCapacity))
         self.formLayout.setWidget(2, QtGui.QFormLayout.FieldRole, self.capacidadeDeInterrupOLineEdit)
+        self.capacidadeDeInterrupOLineEdit.textEdited.connect(self.custom)
 
 
         #definição da propriedade Nº DE SEQUENCIA DE RELIGAMENTO
@@ -90,6 +92,7 @@ class RecloserDialog(QtGui.QWidget):
         self.nDeSequNciasDeReligamentoLineEdit.setObjectName("nDeSequNciasDeReligamentoLineEdit")
         self.nDeSequNciasDeReligamentoLineEdit.setText(str(self.item.chave.recloseSequences))
         self.formLayout.setWidget(3, QtGui.QFormLayout.FieldRole, self.nDeSequNciasDeReligamentoLineEdit)
+        self.nDeSequNciasDeReligamentoLineEdit.textEdited.connect(self.custom)
 
         lista_comp = [int(self.capacidadeDeInterrupOLineEdit.text()), int(self.correnteNominalLineEdit.text()), int(self.nDeSequNciasDeReligamentoLineEdit.text())]
         print lista_comp
@@ -104,16 +107,21 @@ class RecloserDialog(QtGui.QWidget):
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
 
-    def update_values(self):
-        print "clicou!"
-        # print "Update!"
-        # self.correnteNominalLineEdit.setText(str(self.item.dict_prop[self.testeLineEdit.currentText()]['Corrente Nominal']))
-        # self.capacidadeDeInterrupOLineEdit.setText(str(self.item.dict_prop[self.testeLineEdit.currentText()]['Capacidade de Interrupcao']))
-        # self.nDeSequNciasDeReligamentoLineEdit.setText(str(self.item.dict_prop[self.testeLineEdit.currentText()]['Sequencia']))
+    def update_values(self,button):
+
+        if self.testeLineEdit.currentIndex == 0:
+            self.correnteNominalLineEdit.setText(str(self.item.custom_dict['Corrente Nominal']))
+            self.capacidadeDeInterrupOLineEdit.setText(str(self.item.custom_dict['Corrente Nominal']))
+            self.nDeSequNciasDeReligamentoLineEdit.setText(str(self.item.custom_dict['Corrente Nominal']))
+
+        self.correnteNominalLineEdit.setText(str(self.item.dict_prop[self.testeLineEdit.currentText()]['Corrente Nominal']))
+        self.capacidadeDeInterrupOLineEdit.setText(str(self.item.dict_prop[self.testeLineEdit.currentText()]['Capacidade de Interrupcao']))
+        self.nDeSequNciasDeReligamentoLineEdit.setText(str(self.item.dict_prop[self.testeLineEdit.currentText()]['Sequencia']))
 
     def custom(self):
+        self.testeLineEdit.setCurrentIndex(0)
 
-        self.testeLineEdit.setCurrentIndex(3)
+
 
     def teste(self):
         print "teste"
@@ -124,11 +132,10 @@ class RecloserDialog(QtGui.QWidget):
         #Tradução dos nomes dados aos objetos para os nomes gráficos do programa
         Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "Religador - Propriedades", None, QtGui.QApplication.UnicodeUTF8))
         self.identificaOLabel.setText(QtGui.QApplication.translate("Dialog", "Identificação:", None, QtGui.QApplication.UnicodeUTF8))
-        self.identificaOLineEdit.setPlaceholderText(QtGui.QApplication.translate("Dialog", "Identificação", None, QtGui.QApplication.UnicodeUTF8))
         self.correnteNominalLabel.setText(QtGui.QApplication.translate("Dialog", "Corrente Nominal (A): ", None, QtGui.QApplication.UnicodeUTF8))
         self.capacidadeDeInterrupOLabel.setText(QtGui.QApplication.translate("Dialog", "Capacidade de Interrupção (kA):", None, QtGui.QApplication.UnicodeUTF8))
         self.nDeSequNciasDeReligamentoLabel.setText(QtGui.QApplication.translate("Dialog", "Nº de Sequências de Religamento:", None, QtGui.QApplication.UnicodeUTF8))
-        self.testeLabel.setText(QtGui.QApplication.translate("Dialog", "Teste:", None, QtGui.QApplication.UnicodeUTF8))
+        self.testeLabel.setText(QtGui.QApplication.translate("Dialog", "Fabricante:", None, QtGui.QApplication.UnicodeUTF8))
 
     if __name__ == '__main__':
         app = QtGui.QApplication(sys.argv)
