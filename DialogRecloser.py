@@ -45,6 +45,7 @@ class RecloserDialog(QtGui.QWidget):
         print self.item.dict_prop.keys()
         self.testeLineEdit.addItems(self.item.dict_prop.keys())
         self.formLayout.setWidget(4, QtGui.QFormLayout.FieldRole, self.testeLineEdit)
+        self.currentIndexChanged.connect(self.update_values)
 
 
         #definição da propriedade NOME
@@ -90,6 +91,11 @@ class RecloserDialog(QtGui.QWidget):
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), Dialog.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), Dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+
+    def update_values(self):
+        print "Update!"
+
 
     def retranslateUi(self, Dialog):
 
