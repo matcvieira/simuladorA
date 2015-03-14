@@ -304,6 +304,7 @@ class Node(QtGui.QGraphicsRectItem):
         self.bar_busy = False
         self.mean_pos = None
         self.semiFixed = False
+        self.dict_prop = {}
         # caso o item a ser inserido seja do tipo subestacao
         if self.myItemType == self.Subestacao:
             rect = QtCore.QRectF(0, 0, 50.0, 50.0)
@@ -319,6 +320,9 @@ class Node(QtGui.QGraphicsRectItem):
             # definine e ajusta a posicao do label do item grafico
             self.text = Text('Religador', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
+            self.create_dict(10,15,4,'ABB')
+            self.create_dict(12,10,3,'SEL')
+            self.create_dict(9,11,2,'BOSCH')
         # caso o item a ser inserido seja do tipo barra
         elif self.myItemType == self.Barra:
             rect = QtCore.QRectF(0, 0, 10.0, 100.0)
@@ -349,6 +353,11 @@ class Node(QtGui.QGraphicsRectItem):
         self.setFlag(QtGui.QGraphicsItem.ItemIsFocusable, True)
         self.setFlag(QtGui.QGraphicsItem.ItemSendsGeometryChanges, True)
         self.setZValue(0)
+
+
+    def create_dict(self, corrente, capacidade, num_rel, padrao):
+        prop = {'Corrente Nominal': corrente, 'Capacidade de Interrupcao': capacidade, 'Sequencia':num_rel}
+        self.dict_prop[padrao] = prop
 
     def fix_item(self):
         self.Fixed = True
@@ -487,8 +496,7 @@ class Node(QtGui.QGraphicsRectItem):
         self.scene().clearSelection()
         # print "Id:", self.chave.nome, ",", "Corrente Nominal:", self.chave.ratedCurrent, ",", "Breaking Capacity:", self.chave.breakingCapacity, ",", "Seq de Religamento", self.chave.recloseSequences
         self.setSelected(True)
-        print "num_edges"
-        print len(self.edges)
+        print self.dict_prop
         super(Node, self).mousePressEvent(mouse_event)
         return
 

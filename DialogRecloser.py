@@ -36,6 +36,16 @@ class RecloserDialog(QtGui.QWidget):
         self.formLayout.setContentsMargins(0, 0, 0, 0)
         self.formLayout.setObjectName("formLayout")
 
+        # Definição da COMBOBOX
+        self.testeLabel = QtGui.QLabel(self.formLayoutWidget)
+        self.testeLabel.setObjectName("testeLabel")
+        self.formLayout.setWidget(4, QtGui.QFormLayout.LabelRole, self.testeLabel)
+        self.testeLineEdit = QtGui.QComboBox(self.formLayoutWidget)
+        self.testeLineEdit.setObjectName("testeEdit")
+        print self.item.dict_prop.keys()
+        self.testeLineEdit.addItems(self.item.dict_prop.keys())
+        self.formLayout.setWidget(4, QtGui.QFormLayout.FieldRole, self.testeLineEdit)
+
 
         #definição da propriedade NOME
         self.identificaOLabel = QtGui.QLabel(self.formLayoutWidget)
@@ -43,16 +53,9 @@ class RecloserDialog(QtGui.QWidget):
         self.formLayout.setWidget(0, QtGui.QFormLayout.LabelRole, self.identificaOLabel)
         self.identificaOLineEdit = QtGui.QLineEdit(self.formLayoutWidget)
         self.identificaOLineEdit.setObjectName("identificaOLineEdit")
-        self.identificaOLineEdit.setPlaceholderText(str(self.item.chave.nome))
+        self.identificaOLineEdit.setPlaceholderText('Identifica0')
         self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.identificaOLineEdit)
 
-        self.testeLabel = QtGui.QLabel(self.formLayoutWidget)
-        self.testeLabel.setObjectName("testeLabel")
-        self.formLayout.setWidget(4, QtGui.QFormLayout.LabelRole, self.testeLabel)
-        self.testeLineEdit = QtGui.QComboBox(self.formLayoutWidget)
-        self.testeLineEdit.setObjectName("testeEdit")
-        self.testeLineEdit.addItems(["Configuration 1", "Configuration 2", "Configuration 3"])
-        self.formLayout.setWidget(4, QtGui.QFormLayout.FieldRole, self.testeLineEdit)
 
         #definição da propriedade CORRENTE NOMINAL
         self.correnteNominalLabel = QtGui.QLabel(self.formLayoutWidget)
@@ -93,6 +96,7 @@ class RecloserDialog(QtGui.QWidget):
         #Tradução dos nomes dados aos objetos para os nomes gráficos do programa
         Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "Religador - Propriedades", None, QtGui.QApplication.UnicodeUTF8))
         self.identificaOLabel.setText(QtGui.QApplication.translate("Dialog", "Identificação:", None, QtGui.QApplication.UnicodeUTF8))
+        self.identificaOLineEdit.setPlaceholderText(QtGui.QApplication.translate("Dialog", "Identificação", None, QtGui.QApplication.UnicodeUTF8))
         self.correnteNominalLabel.setText(QtGui.QApplication.translate("Dialog", "Corrente Nominal (A): ", None, QtGui.QApplication.UnicodeUTF8))
         self.capacidadeDeInterrupOLabel.setText(QtGui.QApplication.translate("Dialog", "Capacidade de Interrupção (kA):", None, QtGui.QApplication.UnicodeUTF8))
         self.nDeSequNciasDeReligamentoLabel.setText(QtGui.QApplication.translate("Dialog", "Nº de Sequências de Religamento:", None, QtGui.QApplication.UnicodeUTF8))
