@@ -150,7 +150,6 @@ class XMLToDiagram():
                 edge = Edge(w1, w2, self.scene.myLineMenu)
                 self.scene.addItem(edge)
                 edge.update_position()
-                
                 print "opa"
 
 
@@ -173,7 +172,6 @@ class CimXML():
 
                     tag_breaker = self.cim_xml.new_tag("Breaker")
                     tag_node.append(tag_breaker)
-                    
                     tag_id = self.cim_xml.new_tag("mRID")
                     tag_id.append(str(item.id))
                     tag_breaker.append(tag_id)
