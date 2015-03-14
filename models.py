@@ -149,7 +149,6 @@ class XMLToDiagram():
                         w2 = item
                 edge = Edge(w1, w2, self.scene.myLineMenu)
                 self.scene.addItem(edge)
-                self.scene.addItem(edge.GhostRetItem)
                 edge.update_position()
                 
                 print "opa"

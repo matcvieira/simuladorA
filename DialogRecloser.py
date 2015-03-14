@@ -45,7 +45,7 @@ class RecloserDialog(QtGui.QWidget):
         print self.item.dict_prop.keys()
         self.testeLineEdit.addItems(self.item.dict_prop.keys())
         self.formLayout.setWidget(4, QtGui.QFormLayout.FieldRole, self.testeLineEdit)
-        self.currentIndexChanged.connect(self.update_values)
+        self.testeLineEdit.currentIndexChanged.connect(self.update_values)
 
 
         #definição da propriedade NOME
@@ -95,6 +95,10 @@ class RecloserDialog(QtGui.QWidget):
 
     def update_values(self):
         print "Update!"
+
+        self.correnteNominalLineEdit.setText(str(self.item.dict_prop[self.testeLineEdit.currentText()]['Corrente Nominal']))
+        self.capacidadeDeInterrupOLineEdit.setText(str(self.item.dict_prop[self.testeLineEdit.currentText()]['Capacidade de Interrupcao']))
+        self.nDeSequNciasDeReligamentoLineEdit.setText(str(self.item.dict_prop[self.testeLineEdit.currentText()]['Sequencia']))
 
 
     def retranslateUi(self, Dialog):
