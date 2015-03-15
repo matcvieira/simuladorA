@@ -9,28 +9,32 @@
 
 from PySide import QtCore, QtGui
 import sys
+from Cadastro import CadastroDialog
+
 class RecloserDialog(QtGui.QWidget):
 
     def __init__(self, item):
         super(RecloserDialog, self).__init__()
         self.dialog = QtGui.QDialog(self)
         self.item = item
+        self.scene = self.item.scene()
         self.setupUi(self.dialog)
         self.dialog.exec_()
 
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
         Dialog.resize(380, 210)
-        #Define o tamanho da caixa dialogo 
+        #Define o tamanho da caixa dialogo
         self.buttonBox = QtGui.QDialogButtonBox(Dialog)
         self.buttonBox.setGeometry(QtCore.QRect(0, 170, 341, 32))
         #Define o tamanho do layout dos botões do dialogo
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        #self.apply = QtGui.QDialogButtonBox.Apply
-        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok|QtGui.QDialogButtonBox.Save)
+        self.cadastro = QtGui.QPushButton('Cadastrar Novo')
+        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
-        # self.buttonBox.clicked.connect(self.update_values)
-        print self.buttonBox.buttons
+        self.buttonBox.addButton(self.cadastro, QtGui.QDialogButtonBox.ActionRole)
+        self.buttonBox.clicked.connect(self.cadastrar)
+        #print self.buttonBox.buttons
         self.formLayoutWidget = QtGui.QWidget(Dialog)
         self.formLayoutWidget.setGeometry(QtCore.QRect(10, 10, 350, 150))
         #Define a localização do layout das propriedades (coordenada x do ponto, coordenada y do ponto, dimensão em x, dimensão em y)
@@ -45,9 +49,12 @@ class RecloserDialog(QtGui.QWidget):
         self.formLayout.setWidget(4, QtGui.QFormLayout.LabelRole, self.testeLabel)
         self.testeLineEdit = QtGui.QComboBox(self.formLayoutWidget)
         self.testeLineEdit.setObjectName("testeEdit")
-        print self.item.dict_prop.keys()
+        self.testeLineEdit.addItems(self.scene.dict_prop.keys())
         self.testeLineEdit.insertItem(0,'Custom')
-        self.testeLineEdit.addItems(self.item.dict_prop.keys())
+        index = self.testeLineEdit.findText(self.item.text_config)
+        # if index < 0:
+        #     index = 0
+        self.testeLineEdit.setCurrentIndex(index)
         self.formLayout.setWidget(4, QtGui.QFormLayout.FieldRole, self.testeLineEdit)
         self.testeLineEdit.currentIndexChanged.connect(self.update_values)
 
@@ -58,7 +65,7 @@ class RecloserDialog(QtGui.QWidget):
         self.formLayout.setWidget(0, QtGui.QFormLayout.LabelRole, self.identificaOLabel)
         self.identificaOLineEdit = QtGui.QLineEdit(self.formLayoutWidget)
         self.identificaOLineEdit.setObjectName("identificaOLineEdit")
-        self.identificaOLineEdit.setText(self.item.chave.nome)
+        self.identificaOLineEdit.setPlaceholderText(self.item.chave.nome)
         self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.identificaOLineEdit)
 
 
@@ -98,7 +105,7 @@ class RecloserDialog(QtGui.QWidget):
         print lista_comp
 
         # i = 0
-        # for value in self.item.dict_prop[self.testeLineEdit.currentText()].values():
+        # for value in self.scene.dict_prop[self.testeLineEdit.currentText()].values():
         #     if value ==
 
         self.retranslateUi(Dialog)
@@ -107,19 +114,34 @@ class RecloserDialog(QtGui.QWidget):
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
 
-    def update_values(self,button):
+    def update_values(self,index):
 
-        if self.testeLineEdit.currentIndex == 0:
-            self.correnteNominalLineEdit.setText(str(self.item.custom_dict['Corrente Nominal']))
-            self.capacidadeDeInterrupOLineEdit.setText(str(self.item.custom_dict['Corrente Nominal']))
-            self.nDeSequNciasDeReligamentoLineEdit.setText(str(self.item.custom_dict['Corrente Nominal']))
+        if index == 0:
+            return
 
-        self.correnteNominalLineEdit.setText(str(self.item.dict_prop[self.testeLineEdit.currentText()]['Corrente Nominal']))
-        self.capacidadeDeInterrupOLineEdit.setText(str(self.item.dict_prop[self.testeLineEdit.currentText()]['Capacidade de Interrupcao']))
-        self.nDeSequNciasDeReligamentoLineEdit.setText(str(self.item.dict_prop[self.testeLineEdit.currentText()]['Sequencia']))
+        self.correnteNominalLineEdit.setText(str(self.scene.dict_prop[self.testeLineEdit.currentText()]['Corrente Nominal']))
+        self.capacidadeDeInterrupOLineEdit.setText(str(self.scene.dict_prop[self.testeLineEdit.currentText()]['Capacidade de Interrupcao']))
+        self.nDeSequNciasDeReligamentoLineEdit.setText(str(self.scene.dict_prop[self.testeLineEdit.currentText()]['Sequencia']))
 
     def custom(self):
         self.testeLineEdit.setCurrentIndex(0)
+
+    def cadastrar(self, button):
+        role = self.buttonBox.buttonRole(button)
+        if role == QtGui.QDialogButtonBox.ActionRole:
+
+
+            cadastro = CadastroDialog()
+            if cadastro.dialog.result() == 1:
+                if cadastro.nomeDoCadastroLineEdit.text() == '':
+                    return
+                self.scene.create_dict(
+                    self.correnteNominalLineEdit.text(),
+                    self.capacidadeDeInterrupOLineEdit.text(),
+                    self.nDeSequNciasDeReligamentoLineEdit.text(),
+                    cadastro.nomeDoCadastroLineEdit.text())
+                self.testeLineEdit.addItem(cadastro.nomeDoCadastroLineEdit.text())
+                self.testeLineEdit.setCurrentIndex(self.testeLineEdit.count()-1)
 
 
 
