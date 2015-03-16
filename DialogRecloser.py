@@ -114,7 +114,7 @@ class RecloserDialog(QtGui.QWidget):
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
 
-    def update_values(self,index):
+    def update_values(self, index):
 
         if index == 0:
             return
