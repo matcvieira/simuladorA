@@ -4,9 +4,9 @@
 from PySide import QtCore, QtGui
 import math
 import sys
-from rede import Chave
-from rede import BusBarSection
-from rede import Transformador
+from elementos import Religador
+from elementos import BusBarSection
+from elementos import Substation
 from DialogRecloser import RecloserDialog
 from DialogLine import LineDialog
 from DialogBarra import BarraDialog
@@ -46,6 +46,7 @@ class Edge(QtGui.QGraphicsLineItem):
             representa o objeto QtGui.QGraphicsLineItem
         '''
         super(Edge, self).__init__()
+        self.id = id(self)
         self.w1 = w1
         self.w2 = w2
         self.w1.add_edge(self)  # adiciona o objeto Edge a lista de Edges do
@@ -61,8 +62,8 @@ class Edge(QtGui.QGraphicsLineItem):
         self.isFixed = False
         self.fixFlag = False
         self.isPermanent = False
+        self.linha = Condutor("Tipo 1")
         if w1.myItemType == Node.Barra or w2.myItemType == Node.Barra:
-            print "hey!"
             self.isPermanent = True
             if w1.myItemType == Node.Barra:
                 w1.bar_busy = True
@@ -334,14 +335,14 @@ class Node(QtGui.QGraphicsRectItem):
         if self.myItemType == self.Subestacao:
             rect = QtCore.QRectF(0, 0, 50.0, 50.0)
             # definine e ajusta a posicao do label do item grafico
-            self.substation = Transformador("Identificador", 0.0, 0.0, 0.0, complex(0,0))
+            self.substation = Substation("Identificador", 0.0, 0.0, 0.0, complex(0,0))
             self.text = Text('Subestacao', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
         # caso o item a ser inserido seja do tipo religador
         elif self.myItemType == self.Religador:
             rect = QtCore.QRectF(0, 0, 40.0, 40.0)
             # Cria o objeto abstrato chave referente ao religador
-            self.chave = Chave("Identificador",0,0,0,0,0)
+            self.chave = Religador("Identificador",0,0,0,0,0,self.id)
             # definine e ajusta a posicao do label do item grafico
             self.text = Text('Religador', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
