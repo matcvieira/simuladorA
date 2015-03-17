@@ -7,11 +7,13 @@ import sys
 from elementos import Religador
 from elementos import BusBarSection
 from elementos import Substation
+from elementos import Terminal
 from DialogRecloser import RecloserDialog
 from DialogLine import LineDialog
 from DialogBarra import BarraDialog
 from DialogSubstation import SubstationDialog
 from aviso_conexao import AvisoConexaoDialog
+
 
 
 class DashedLine(QtGui.QGraphicsLineItem):
@@ -342,6 +344,8 @@ class Node(QtGui.QGraphicsRectItem):
         elif self.myItemType == self.Religador:
             rect = QtCore.QRectF(0, 0, 40.0, 40.0)
             # Cria o objeto abstrato chave referente ao religador
+            self.terminal1 = Terminal()
+            self.terminal2 = Terminal()
             self.chave = Religador("Identificador",0,0,0,0,0,self.id)
             # definine e ajusta a posicao do label do item grafico
             self.text = Text('Religador', self, self.scene())

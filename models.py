@@ -23,29 +23,29 @@ class DiagramToXML(ElementTree.Element):
         lista.reverse()
         for item in self.scene.items():
             if isinstance(item, Node):
-                node = ElementTree.Element(
-                    'node', attrib={'type': str(item.myItemType)})
+                CE = ElementTree.Element(
+                    'CE', attrib={'type': str(item.myItemType)})
                 id = ElementTree.Element('id')
                 id.text = str(item.id)
-                node.append(id)
+                CE.append(id)
 
                 x = ElementTree.Element('x')
                 x.text = str(item.scenePos().x())
-                node.append(x)
+                CE.append(x)
 
                 y = ElementTree.Element('y')
                 y.text = str(item.scenePos().y())
-                node.append(y)
+                CE.append(y)
 
                 width = ElementTree.Element('width')
                 width.text = str(item.rect().width())
-                node.append(width)
+                CE.append(width)
 
                 height = ElementTree.Element('height')
                 height.text = str(item.rect().height())
-                node.append(height)
+                CE.append(height)
 
-                self.append(node)
+                self.append(CE)
         for item in lista:
 
             if isinstance(item, Edge):
@@ -88,7 +88,7 @@ class XMLToDiagram():
         self.scene.clear()
         for child in xml_element:
 
-            if child.tag == 'node':
+            if child.tag == 'CE':
 
                 if child.attrib['type'] == '0':
                     item = Node(
@@ -167,11 +167,11 @@ class CimXML():
 
                 if item.myItemType == item.Religador:
 
-                    tag_node = self.cim_xml.new_tag("Node")
-                    self.cim_xml.append(tag_node)
+                    tag_CE = self.cim_xml.new_tag("ConductingEquipment")
+                    self.cim_xml.append(tag_CE)
 
                     tag_breaker = self.cim_xml.new_tag("Breaker")
-                    tag_node.append(tag_breaker)
+                    tag_CE.append(tag_breaker)
                     tag_id = self.cim_xml.new_tag("mRID")
                     tag_id.append(str(item.id))
                     tag_breaker.append(tag_id)
@@ -196,6 +196,26 @@ class CimXML():
                     tag_NO.append(str(item.chave.normalOpen))
                     tag_breaker.append(tag_NO)
 
+                    tag_terminal1 = self.cim_xml.new_tag("terminal1")
+                    tag_terminal1.append(str(item.terminal1.mRID))
+                    tag_breaker.append(tag_terminal1)
+
+                    tag_terminal2 = self.cim_xml.new_tag("terminal2")
+                    tag_terminal2.append(str(item.terminal2.mRID))
+                    tag_breaker.append(tag_terminal2)
+                    
+                    tag_terminal = self.cim_xml.new_tag("terminal")
+                    tag_terminal.append(str(item.terminal1.mRID))
+                    tag_CE.append(tag_terminal)
+
+                    tag_terminal = self.cim_xml.new_tag("terminal")
+                    tag_terminal.append(str(item.terminal2.mRID))
+                    tag_CE.append(tag_terminal)
+                    
+
+
+
+
 
                     # self.cim_xml.find(str(item.id)).append(self.cim_xml.new_tag("ratedCurrent"))
 
@@ -213,11 +233,11 @@ class CimXML():
 
                 if item.myItemType == item.Barra:
 
-                    tag_node = self.cim_xml.new_tag("Node")
-                    self.cim_xml.append(tag_node)
+                    tag_CE = self.cim_xml.new_tag("Node")
+                    self.cim_xml.append(tag_CE)
 
                     tag_barra = self.cim_xml.new_tag("busBarSection")
-                    tag_node.append(tag_barra)
+                    tag_CE.append(tag_barra)
 
                     tag_id = self.cim_xml.new_tag("id")
                     tag_id.append(str(item.id))
@@ -248,11 +268,11 @@ class CimXML():
 
                 if item.myItemType == item.Subestacao:
 
-                    tag_node = self.cim_xml.new_tag("Node")
-                    self.cim_xml.append(tag_node)
+                    tag_CE = self.cim_xml.new_tag("Node")
+                    self.cim_xml.append(tag_CE)
 
                     tag_substation = self.cim_xml.new_tag("Substation")
-                    tag_node.append(tag_substation)
+                    tag_CE.append(tag_substation)
 
                     tag_id = self.cim_xml.new_tag("id")
                     tag_id.append(str(item.id))
@@ -283,11 +303,11 @@ class CimXML():
 
                 if item.myItemType == item.NoDeCarga:
 
-                    tag_node = self.cim_xml.new_tag("Node")
-                    self.cim_xml.append(tag_node)
+                    tag_CE = self.cim_xml.new_tag("Node")
+                    self.cim_xml.append(tag_CE)
 
-                    tag_connectivitynode = self.cim_xml.new_tag("ConnectivityNode")
-                    tag_node.append(tag_connectivitynode)
+                    tag_connectivityCE = self.cim_xml.new_tag("ConnectivityNode")
+                    tag_CE.append(tag_connectivityCE)
                     
                     tag_id = self.cim_xml.new_tag("id")
                     tag_id.append(str(item.id))

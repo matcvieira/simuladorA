@@ -46,3 +46,7 @@ class NoConectivo(object):
         self.terminal1 = terminal1.mRID
         self.terminal2 = terminal2.mRID
 
+class Terminal(object):
+    def __init__(self):
+        self.mRID = id(self)
+
