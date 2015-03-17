@@ -40,3 +40,9 @@ class Condutor(object):
     def __init__(self, tipo):
         self.tipo = tipo
 
+
+class NoConectivo(object):
+    def __init__(self, terminal1, terminal2):
+        self.terminal1 = terminal1.mRID
+        self.terminal2 = terminal2.mRID
+
