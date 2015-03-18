@@ -162,6 +162,7 @@ class CimXML():
     def __init__(self, scene):
         self.scene = scene
         self.lista_no_conectivo = []
+        self.lista_terminais = []
         self.montar_rede(scene)
 
         self.cim_xml = BeautifulSoup()
@@ -176,6 +177,7 @@ class CimXML():
 
                     tag_breaker = self.cim_xml.new_tag("Breaker")
                     tag_CE.append(tag_breaker)
+
                     tag_id = self.cim_xml.new_tag("mRID")
                     tag_id.append(str(item.id))
                     tag_breaker.append(tag_id)
@@ -208,42 +210,33 @@ class CimXML():
                     tag_terminal2.append(str(item.terminal2.mRID))
                     tag_breaker.append(tag_terminal2)
                     
-                    tag_terminal = self.cim_xml.new_tag("terminal")
-                    tag_terminal.append(str(item.terminal1.mRID))
-                    tag_CE.append(tag_terminal)
+                    # tag_CE = self.cim_xml.new_tag("ConductingEquipment")
+                    # self.cim_xml.append(tag_CE)
 
-                    tag_terminal = self.cim_xml.new_tag("terminal")
-                    tag_terminal.append(str(item.terminal2.mRID))
-                    tag_CE.append(tag_terminal)
+                    # tag_terminal = self.cim_xml.new_tag("terminal")
+                    # tag_terminal.append(str(item.terminal1.mRID))
+                    # tag_CE.append(tag_terminal)
+
+                    # tag_CE = self.cim_xml.new_tag("ConductingEquipment")
+                    # self.cim_xml.append(tag_CE)
+
+                    # tag_terminal = self.cim_xml.new_tag("terminal")
+                    # tag_terminal.append(str(item.terminal2.mRID))
+                    # tag_CE.append(tag_terminal)
                     
-
-
-
-
-
-                    # self.cim_xml.find(str(item.id)).append(self.cim_xml.new_tag("ratedCurrent"))
-
-
-                    # self.cim_xml.find(str(item.id)).append(self.cim_xml.new_tag("inTransitTime"))
-
-                    # self.cim_xml.find(str(item.id)).append(self.cim_xml.new_tag("breakingCapacity"))
-
-                    # self.cim_xml.find(str(item.id)).append(self.cim_xml.new_tag("recloseSequences"))
-
-                    # self.cim_xml.find(str(item.id)).append(self.cim_xml.new_tag("state"))  
 
         for item in scene.items():
             if isinstance(item, Node):
 
                 if item.myItemType == item.Barra:
 
-                    tag_CE = self.cim_xml.new_tag("Node")
+                    tag_CE = self.cim_xml.new_tag("ConductingEquipment")
                     self.cim_xml.append(tag_CE)
 
                     tag_barra = self.cim_xml.new_tag("busBarSection")
                     tag_CE.append(tag_barra)
 
-                    tag_id = self.cim_xml.new_tag("id")
+                    tag_id = self.cim_xml.new_tag("mRID")
                     tag_id.append(str(item.id))
                     self.cim_xml.find("busBarSection").append(tag_id)
 
@@ -251,92 +244,197 @@ class CimXML():
                     tag_phases.append(str(item.barra.phases))
                     tag_barra.append(tag_phases)
 
-                    #tag_itt = self.cim_xml.new_tag("inTransitTime")
-                    #tag_itt.append(str(item.chave.inTransitTime))
-                    #tag_id.append(tag_itt)
+                    tag_terminal1 = self.cim_xml.new_tag("terminal1")
+                    tag_terminal1.append(str(item.terminal1.mRID))
+                    tag_barra.append(tag_terminal1)
 
-                    #tag_bc = self.cim_xml.new_tag("breakingCapacity")
-                    #tag_bc.append(str(item.chave.breakingCapacity))
-                    #tag_id.append(tag_bc)
+                    tag_terminal2 = self.cim_xml.new_tag("terminal2")
+                    tag_terminal2.append(str(item.terminal2.mRID))
+                    tag_barra.append(tag_terminal2)
 
-                    #tag_rs = self.cim_xml.new_tag("recloseSequences")
-                    #tag_rs.append(str(item.chave.recloseSequences))
-                    #tag_id.append(tag_rs)
+                    # tag_CE = self.cim_xml.new_tag("ConductingEquipment")
+                    # self.cim_xml.append(tag_CE)
+                    
+                    # tag_terminal = self.cim_xml.new_tag("terminal")
+                    # tag_terminal.append(str(item.terminal1.mRID))
+                    # tag_CE.append(tag_terminal)
 
-                    #tag_state = self.cim_xml.new_tag("state")
-                    #tag_state.append(str(item.chave.estado))
-                    #tag_id.append(tag_state)
+                    # tag_CE = self.cim_xml.new_tag("ConductingEquipment")
+                    # self.cim_xml.append(tag_CE)
+
+                    # tag_terminal = self.cim_xml.new_tag("terminal")
+                    # tag_terminal.append(str(item.terminal2.mRID))
+                    # tag_CE.append(tag_terminal)
+                    
+
         
         for item in scene.items():
             if isinstance(item, Node):
 
                 if item.myItemType == item.Subestacao:
 
-                    tag_CE = self.cim_xml.new_tag("Node")
+                    tag_CE = self.cim_xml.new_tag("ConductingEquipment")
                     self.cim_xml.append(tag_CE)
 
                     tag_substation = self.cim_xml.new_tag("Substation")
                     tag_CE.append(tag_substation)
 
-                    tag_id = self.cim_xml.new_tag("id")
+                    tag_id = self.cim_xml.new_tag("mRID")
                     tag_id.append(str(item.id))
                     self.cim_xml.find("Substation").append(tag_id)
 
-                    #tag_rc = self.cim_xml.new_tag("ratedCurrent")
-                    #tag_rc.append(str(item.chave.ratedCurrent))
-                    #tag_id.append(tag_rc)
+                    tag_terminal1 = self.cim_xml.new_tag("terminal1")
+                    tag_terminal1.append(str(item.terminal1.mRID))
+                    tag_substation.append(tag_terminal1)
 
-                    #tag_itt = self.cim_xml.new_tag("inTransitTime")
-                    #tag_itt.append(str(item.chave.inTransitTime))
-                    #tag_id.append(tag_itt)
+                    tag_terminal2 = self.cim_xml.new_tag("terminal2")
+                    tag_terminal2.append(str(item.terminal2.mRID))
+                    tag_substation.append(tag_terminal2)
 
-                    #tag_bc = self.cim_xml.new_tag("breakingCapacity")
-                    #tag_bc.append(str(item.chave.breakingCapacity))
-                    #tag_id.append(tag_bc)
+                    # tag_CE = self.cim_xml.new_tag("ConductingEquipment")
+                    # self.cim_xml.append(tag_CE)
+                    
+                    # tag_terminal = self.cim_xml.new_tag("terminal")
+                    # tag_terminal.append(str(item.terminal1.mRID))
+                    # tag_CE.append(tag_terminal)
 
-                    #tag_rs = self.cim_xml.new_tag("recloseSequences")
-                    #tag_rs.append(str(item.chave.recloseSequences))
-                    #tag_id.append(tag_rs)
+                    # tag_CE = self.cim_xml.new_tag("ConductingEquipment")
+                    # self.cim_xml.append(tag_CE)
 
-                    #tag_NO = self.cim_xml.new_tag("NormalOpen")
-                    #tag_NO.append(str(item.chave.estado))
-                    #tag_id.append(tag_NO)
+                    # tag_terminal = self.cim_xml.new_tag("terminal")
+                    # tag_terminal.append(str(item.terminal2.mRID))
+                    # tag_CE.append(tag_terminal)    
 
         for item in scene.items():
             if isinstance(item, Node):
 
                 if item.myItemType == item.NoDeCarga:
 
-                    tag_CE = self.cim_xml.new_tag("Node")
+                    tag_CE = self.cim_xml.new_tag("ConductingEquipment")
                     self.cim_xml.append(tag_CE)
 
-                    tag_connectivityCE = self.cim_xml.new_tag("ConnectivityNode")
-                    tag_CE.append(tag_connectivityCE)
+                    tag_energyConsumer = self.cim_xml.new_tag("EnergyConsumer")
+                    tag_CE.append(tag_energyConsumer)
                     
-                    tag_id = self.cim_xml.new_tag("id")
+                    tag_id = self.cim_xml.new_tag("mRID")
                     tag_id.append(str(item.id))
-                    self.cim_xml.find("ConnectivityNode").append(tag_id)
+                    self.cim_xml.find("EnergyConsumer").append(tag_id)
 
-                    #tag_rc = self.cim_xml.new_tag("ratedCurrent")
-                    #tag_rc.append(str(item.chave.ratedCurrent))
-                    #tag_id.append(tag_rc)
+                    tag_terminal1 = self.cim_xml.new_tag("terminal1")
+                    tag_terminal1.append(str(item.terminal1.mRID))
+                    tag_energyConsumer.append(tag_terminal1)
 
-                    #tag_itt = self.cim_xml.new_tag("inTransitTime")
-  
-                    #tag_itt.append(str(item.chave.inTransitTime))
-                    #tag_id.append(tag_itt)
+                    tag_terminal2 = self.cim_xml.new_tag("terminal2")
+                    tag_terminal2.append(str(item.terminal2.mRID))
+                    tag_energyConsumer.append(tag_terminal2)
 
-                    #tag_bc = self.cim_xml.new_tag("breakingCapacity")
-                    #tag_bc.append(str(item.chave.breakingCapacity))
-                    #tag_id.append(tag_bc)
+                    # tag_CE = self.cim_xml.new_tag("ConductingEquipment")
+                    # self.cim_xml.append(tag_CE)
+                    
+                    # # tag_terminal = self.cim_xml.new_tag("terminal")
+                    # # tag_terminal.append(str(item.terminal1.mRID))
+                    # # tag_CE.append(tag_terminal)
 
-                    #tag_rs = self.cim_xml.new_tag("recloseSequences")
-                    #tag_rs.append(str(item.chave.recloseSequences))
-                    #tag_id.append(tag_rs)
+                    # tag_CE = self.cim_xml.new_tag("ConductingEquipment")
+                    # self.cim_xml.append(tag_CE)
 
-                    #tag_NO = self.cim_xml.new_tag("NormalOpen")
-                    #tag_NO.append(str(item.chave.estado))
-                    #tag_id.append(tag_NO)
+                    # tag_terminal = self.cim_xml.new_tag("terminal")
+                    # tag_terminal.append(str(item.terminal2.mRID))
+                    # tag_CE.append(tag_terminal)
+
+        for item in scene.items():
+            if isinstance(item, Edge):
+
+                    tag_CE = self.cim_xml.new_tag("ConductingEquipment")
+                    self.cim_xml.append(tag_CE)
+
+                    tag_conductor = self.cim_xml.new_tag("Conductor")
+                    tag_CE.append(tag_conductor)
+                    
+                    tag_id = self.cim_xml.new_tag("mRID")
+                    tag_id.append(str(item.linha.id))
+                    self.cim_xml.find("Conductor").append(tag_id)
+
+                    tag_length = self.cim_xml.new_tag("length")
+                    tag_length.append(str(item.linha.comprimento))
+                    self.cim_xml.find("Conductor").append(tag_length)
+
+                    tag_r = self.cim_xml.new_tag("r")
+                    tag_r.append(str(item.linha.resistencia))
+                    self.cim_xml.find("Conductor").append(tag_r)
+
+                    tag_r0 = self.cim_xml.new_tag("r0")
+                    tag_r0.append(str(item.linha.resistencia_zero))
+                    self.cim_xml.find("Conductor").append(tag_r0)
+
+                    tag_x = self.cim_xml.new_tag("x")
+                    tag_x.append(str(item.linha.reatancia))
+                    self.cim_xml.find("Conductor").append(tag_x) 
+
+                    tag_x0 = self.cim_xml.new_tag("x0")
+                    tag_x0.append(str(item.linha.reatancia_zero))
+                    self.cim_xml.find("Conductor").append(tag_x0)
+
+                    tag_currentLimit = self.cim_xml.new_tag("currentLimit")
+                    tag_currentLimit.append(str(item.linha.ampacidade))
+                    self.cim_xml.find("Conductor").append(tag_currentLimit)                   
+
+                    tag_terminal1 = self.cim_xml.new_tag("terminal1")
+                    tag_terminal1.append(str(item.terminal1.mRID))
+                    tag_conductor.append(tag_terminal1)
+
+                    tag_terminal2 = self.cim_xml.new_tag("terminal2")
+                    tag_terminal2.append(str(item.terminal2.mRID))
+                    tag_conductor.append(tag_terminal2)
+
+                    # tag_CE = self.cim_xml.new_tag("ConductingEquipment")
+                    # self.cim_xml.append(tag_CE)
+                    
+                    # tag_terminal = self.cim_xml.new_tag("terminal")
+                    # tag_terminal.append(str(item.terminal1.mRID))
+                    # tag_CE.append(tag_terminal)
+
+                    # tag_CE = self.cim_xml.new_tag("ConductingEquipment")
+                    # self.cim_xml.append(tag_CE)
+
+                    # tag_terminal = self.cim_xml.new_tag("terminal")
+                    # tag_terminal.append(str(item.terminal2.mRID))
+                    # tag_CE.append(tag_terminal)
+
+        for terminal in self.lista_terminais:            
+            tag_CE = self.cim_xml.new_tag("ConductingEquipment")
+            self.cim_xml.append(tag_CE)
+
+            tag_mRID = self.cim_xml.new_tag("mRID")
+            tag_mRID.append(str(terminal.mRID))
+
+            tag_terminal = self.cim_xml.new_tag("terminal")
+            tag_terminal.append(tag_mRID)
+            tag_CE.append(tag_terminal)
+
+        for no in self.lista_no_conectivo:
+            tag_mRID = self.cim_xml.new_tag("mRID")
+            tag_mRID.append(str(id(no)))
+
+            tag_no_conectivo = self.cim_xml.new_tag("ConnectivityNode")
+            tag_no_conectivo.append(tag_mRID)
+
+            self.cim_xml.append(tag_no_conectivo)
+
+            
+            for terminal in no.terminal_list:
+                tag_terminal = self.cim_xml.new_tag("terminal")
+                tag_mRID_terminal = self.cim_xml.new_tag("mRID")
+                tag_mRID_terminal.append(str(terminal.mRID))
+                tag_terminal.append(tag_mRID_terminal)
+                tag_no_conectivo.append(tag_terminal)  
+
+
+
+            
+
+
+
 
     def write_xml(self, path):
         '''
@@ -355,13 +453,19 @@ class CimXML():
                 if item.myItemType != Node.NoConectivo and item.myItemType != Node.Barra:
                     item.terminal1 = Terminal(item)
                     item.terminal2 = Terminal(item)
+                    self.lista_terminais.append(item.terminal1)
+                    self.lista_terminais.append(item.terminal2)
 
                 if item.myItemType == Node.Barra:
                     for i in range(len(item.edges)):
-                        item.terminals.append(Terminal(item))
+                        terminal = Terminal(item)
+                        item.terminals.append(terminal)
+                        self.lista_terminais.append(terminal)
             if isinstance(item, Edge):
                 item.terminal1 = Terminal(item)
                 item.terminal2 = Terminal(item)
+                self.lista_terminais.append(item.terminal1)
+                self.lista_terminais.append(item.terminal1)
 
         for edge in self.scene.items():
             if isinstance(edge, Edge):

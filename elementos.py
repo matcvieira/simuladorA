@@ -16,9 +16,10 @@ class Religador(object):
 
 
 class EnergyConsumer(object):
-
-    def __init__(self, power):
-        self.power = power/1000
+    def __init__(self, nome, pfixed = 0):
+        self.id = id(self)
+        self.nome = nome
+        self.potencia_ativa = pfixed
 
 
 class Substation(object):
@@ -37,8 +38,14 @@ class BusBarSection(object):
 
 
 class Condutor(object):
-    def __init__(self, tipo):
-        self.tipo = tipo
+    def __init__(self, length, r, r0, x, x0, currentLimit):
+        self.id = id(self)
+        self.comprimento = length
+        self.resistencia = r
+        self.resistencia_zero = r0
+        self.reatancia = x
+        self.reatancia_zero = x0
+        self.ampacidade = currentLimit
 
 
 class NoConect(object):

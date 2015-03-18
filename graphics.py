@@ -4,10 +4,11 @@
 from PySide import QtCore, QtGui
 import math
 import sys
-from elementos import Religador, BusBarSection, Substation, Terminal, Condutor, NoConect
+from elementos import Religador, BusBarSection, Substation, Terminal, Condutor, NoConect, EnergyConsumer
 from DialogRecloser import RecloserDialog
 from DialogLine import LineDialog
 from DialogBarra import BarraDialog
+from DialogConductor import ConductorDialog
 from DialogSubstation import SubstationDialog
 from aviso_conexao import AvisoConexaoDialog
 
@@ -66,7 +67,7 @@ class Edge(QtGui.QGraphicsLineItem):
         self.isFixed = False
         self.fixFlag = False
         self.isPermanent = False
-        self.linha = Condutor("Tipo 1")
+        self.linha = Condutor(0,0,0,0,0,0)
         if w1.myItemType == Node.Barra or w2.myItemType == Node.Barra:
             self.isPermanent = True
             if w1.myItemType == Node.Barra:
@@ -1328,6 +1329,34 @@ class SceneWidget(QtGui.QGraphicsScene):
                             pass
                         else:
                             item.substation.tensao_primario = dialog.tpLineEdit.text()
+
+            if isinstance(item, Edge):
+                dialog = ConductorDialog(item)
+                if dialog.dialog.result() == 1:
+                        if dialog.comprimentoLineEdit.text() == "":
+                            pass
+                        else:
+                            item.linha.comprimento = dialog.comprimentoLineEdit.text()
+                        if dialog.resistenciaLineEdit.text() == "":
+                            pass
+                        else:
+                            item.linha.resistencia = dialog.resistenciaLineEdit.text()
+                        if dialog.resistenciaZeroLineEdit.text() == "":
+                            pass
+                        else:
+                            item.linha.resistencia_zero = dialog.resistenciaZeroLineEdit.text()
+                        if dialog.reatanciaLineEdit.text() == "":
+                            pass
+                        else:
+                            item.linha.reatancia = dialog.reatanciaLineEdit.text()
+                        if dialog.reatanciaZeroLineEdit.text() == "":
+                            pass
+                        else:
+                            item.linha.reatancia_zero = dialog.reatanciaZeroLineEdit.text()
+                        if dialog.ampacidadeLineEdit.text() == "":
+                            pass
+                        else:
+                            item.linha.ampacidade = dialog.ampacidadeLineEdit.text()
 
     def increase_bus(self):
         '''
