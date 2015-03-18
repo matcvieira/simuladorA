@@ -41,12 +41,35 @@ class Condutor(object):
         self.tipo = tipo
 
 
-class NoConectivo(object):
-    def __init__(self, terminal1, terminal2):
-        self.terminal1 = terminal1.mRID
-        self.terminal2 = terminal2.mRID
+class NoConect(object):
+    def __init__(self, terminal_list):
+        super(NoConect, self).__init__()
+        self.terminal_list = terminal_list
+        self.backup_list = None
+
+    def define_no(self):
+        for terminal in self.terminal_list:
+            terminal.no = self
 
 class Terminal(object):
-    def __init__(self):
+    def __init__(self, parent, connected = False):
         self.mRID = id(self)
+        self.no = None
+        self.connected = connected
+        self.parent = parent
+
+    def connect(self):
+        self.connected = True
+
+    def disconnect(self):
+        self.connected = False
+
+    def delete_from_list(self):
+        if self.no != None:
+            self.no.backup_list = self.no.terminal_list
+            self.no.terminal_list.remove(self)
+            print "remova!"
+            if len(self.no.terminal_list) < 2:
+                self.parent.scene().lista_no_conectivo.remove(self.no)
+
 

@@ -4,6 +4,8 @@ from xml.dom import minidom
 from PySide import QtCore, QtGui
 from graphics import Node, Edge
 from bs4 import BeautifulSoup
+from elementos import NoConect, Terminal
+
 
 
 class DiagramToXML(ElementTree.Element):
@@ -159,6 +161,8 @@ class CimXML():
 
     def __init__(self, scene):
         self.scene = scene
+        self.lista_no_conectivo = []
+        self.montar_rede(scene)
 
         self.cim_xml = BeautifulSoup()
 
@@ -334,8 +338,6 @@ class CimXML():
                     #tag_NO.append(str(item.chave.estado))
                     #tag_id.append(tag_NO)
 
-
-
     def write_xml(self, path):
         '''
             Função que cria o arquivo XML na localização indicada pelo
@@ -344,3 +346,166 @@ class CimXML():
         f = open(path, 'w')
         f.write(self.cim_xml.prettify())
         f.close()
+
+
+    def montar_rede(self, scene):
+
+        for item in self.scene.items():
+            if isinstance(item, Node):
+                if item.myItemType != Node.NoConectivo and item.myItemType != Node.Barra:
+                    item.terminal1 = Terminal(item)
+                    item.terminal2 = Terminal(item)
+
+                if item.myItemType == Node.Barra:
+                    for i in range(len(item.edges)):
+                        item.terminals.append(Terminal(item))
+            if isinstance(item, Edge):
+                item.terminal1 = Terminal(item)
+                item.terminal2 = Terminal(item)
+
+        for edge in self.scene.items():
+            if isinstance(edge, Edge):
+                no_conectivo_1 = NoConect([])
+                no_conectivo_2 = NoConect([])
+                print "start"
+
+                # Ligação do Nó Conectivo relativo à ligação do terminal de w1 com o terminal 1 da linha - CONVENÇÃO!
+                if edge.w1.myItemType != Node.NoConectivo and edge.w1.myItemType != Node.Barra and edge.w2.myItemType != Node.Barra:
+
+                    print "w1 is not NoC"
+                    if edge.w1.terminal1.connected:
+                        if edge.w1.terminal2.connected:
+                            pass
+                        else:
+                            no_conectivo_1.terminal_list.append(edge.w1.terminal2)
+                            edge.w1.terminal2.connect()
+                            no_conectivo_1.terminal_list.append(edge.terminal1)
+                            edge.terminal1.connect()
+                            self.lista_no_conectivo.append(no_conectivo_1)
+                    else:
+                        no_conectivo_1.terminal_list.append(edge.w1.terminal1)
+                        edge.w1.terminal1.connect()
+                        no_conectivo_1.terminal_list.append(edge.terminal1)
+                        edge.terminal1.connect()
+                        self.lista_no_conectivo.append(no_conectivo_1)
+                elif edge.w1.myItemType == Node.NoConectivo and edge.w1.con_lock is False:
+                    print "w1 is noC"
+                    edge.w1.con_lock = True
+
+                    
+                    print len(edge.w1.edges)
+                    no_conectivo = NoConect([])  
+                    print id(no_conectivo.terminal_list)                 
+                    for derivation in edge.w1.edges:
+                        
+                        if derivation.terminal1.connected:
+                            print "cp1"
+                            if derivation.terminal2.connected:
+                                pass
+                            else:
+                                no_conectivo.terminal_list.append(derivation.terminal2)
+                                derivation.terminal2.connect()
+                        else:
+                            print "cp2"
+                            no_conectivo.terminal_list.append(derivation.terminal1)
+                            derivation.terminal1.connect()
+                    self.lista_no_conectivo.append(no_conectivo)
+
+                elif edge.w1.myItemType == Node.Barra:
+                    for terminal in edge.w1.terminals:
+                        no_conectivo = NoConect([])
+                        if terminal.connected:
+                            continue
+                        else:
+                            no_conectivo.terminal_list.append(terminal)
+                            terminal.connect()
+                            if edge.w2.terminal1.connected:
+                                if edge.w2.terminal2.connected:
+                                    pass
+                                else:
+                                    no_conectivo.terminal_list.append(edge.w2.terminal2)
+                                    edge.w2.terminal2.connect()
+                            else:
+                                no_conectivo.terminal_list.append(edge.w2.terminal1)
+                                edge.w2.terminal1.connect()
+                            self.lista_no_conectivo.append(no_conectivo)
+                            break
+
+
+                # Ligação do Nó Conectivo relativo à ligação do terminal de w2 com o terminal 2 da linha - CONVENÇÃO!
+                if edge.w2.myItemType != Node.NoConectivo and edge.w2.myItemType != Node.Barra and edge.w1.myItemType != Node.Barra:
+                    print "w2 is not NoC"
+                    if edge.w2.terminal1.connected:
+                        if edge.w2.terminal2.connected:
+                            pass
+                        else:
+                            no_conectivo_2.terminal_list.append(edge.w2.terminal2)
+                            edge.w2.terminal2.connect()
+                            no_conectivo_2.terminal_list.append(edge.terminal2)
+                            edge.terminal2.connect()
+                            self.lista_no_conectivo.append(no_conectivo_2)
+                    else:
+                        no_conectivo_2.terminal_list.append(edge.w2.terminal1)
+                        edge.w2.terminal1.connect()
+                        no_conectivo_2.terminal_list.append(edge.terminal2)
+                        edge.terminal1.connect()
+                        self.lista_no_conectivo.append(no_conectivo_2)
+
+                elif edge.w2.myItemType == Node.NoConectivo and edge.w2.con_lock is False:
+                    print "w2 is noC"
+                    edge.w2.con_lock = True
+                    no_conectivo = NoConect([])
+                    print id(no_conectivo.terminal_list)  
+                    
+                    for derivation in edge.w2.edges:
+                        
+                        if derivation.terminal1.connected:
+                            if derivation.terminal2.connected:
+                                pass
+                            else:
+                                no_conectivo.terminal_list.append(derivation.terminal2)
+                                derivation.terminal2.connect()
+                        else:
+                            no_conectivo.terminal_list.append(derivation.terminal1)
+                            derivation.terminal1.connect()
+                            
+                    self.lista_no_conectivo.append(no_conectivo)
+
+                elif edge.w2.myItemType == Node.Barra:
+                    for terminal in edge.w2.terminals:
+                        no_conectivo = NoConect([])
+                        if terminal.connected:
+                            continue
+                        else:
+                            no_conectivo.terminal_list.append(terminal)
+                            terminal.connect()
+                            if edge.w1.terminal1.connected:
+                                if edge.w1.terminal2.connected:
+                                    pass
+                                else:
+                                    no_conectivo.terminal_list.append(edge.w1.terminal2)
+                                    edge.w1.terminal2.connect()
+                            else:
+                                no_conectivo.terminal_list.append(edge.w1.terminal1)
+                                edge.w1.terminal1.connect()
+                            self.lista_no_conectivo.append(no_conectivo)
+                            break
+
+                print "end"
+
+
+        print "=========================Lista de Nós Conectivos=========================\n\n"
+        for no in self.lista_no_conectivo:
+            print str(id(no)) + "\n"
+        print "=========================================================================\n\n"
+        for no in self.lista_no_conectivo:
+            print "===============================NÓ CONECTIVO - " + str(id(no)) + "============\n\n"
+            for no2 in no.terminal_list:
+                print "terminal: " + str(id(no2)) + "\n" + "objeto: " + str(id(no2.parent)) + "\n" + "Posição: " + str(no2.parent.scenePos()) + "\n"
+            print "=====================================================================\n\n"
+
+        print "--------------------------------------------------------------------------"
+
+
+
+

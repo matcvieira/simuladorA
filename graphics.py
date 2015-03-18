@@ -4,17 +4,14 @@
 from PySide import QtCore, QtGui
 import math
 import sys
-from elementos import Religador
-from elementos import BusBarSection
-from elementos import Substation
-from elementos import Terminal
+from elementos import Religador, BusBarSection, Substation, Terminal, Condutor, NoConect
 from DialogRecloser import RecloserDialog
 from DialogLine import LineDialog
 from DialogBarra import BarraDialog
 from DialogSubstation import SubstationDialog
 from aviso_conexao import AvisoConexaoDialog
 
-
+lista_no_conectivo = []
 
 class DashedLine(QtGui.QGraphicsLineItem):
 
@@ -51,11 +48,16 @@ class Edge(QtGui.QGraphicsLineItem):
         self.id = id(self)
         self.w1 = w1
         self.w2 = w2
+        scene = self.scene()
         self.w1.add_edge(self)  # adiciona o objeto Edge a lista de Edges do
 # objeto w1
         self.w2.add_edge(self)  # adiciona o objeto Edge a lista de Edges do
 # objeto w2
 
+        # self.terminal1 = Terminal(self)
+        # self.terminal2 = Terminal(self)
+
+        
         self.myEdgeMenu = edge_menu
         line = QtCore.QLineF(self.w1.pos(), self.w2.pos())
         self.setLine(line)
@@ -78,8 +80,6 @@ class Edge(QtGui.QGraphicsLineItem):
 
         dist = math.sqrt(pow(pos.x() - self.line().p1().x(), 2) + pow(pos.y() - self.line().p1().y(), 2))
         fraction = dist / self.line().length()
-        print "fraction:"
-        print fraction
         if 0.75 < fraction < 1:
             fraction = 0.75
         if 0.5 < fraction < 0.75:
@@ -332,7 +332,9 @@ class Node(QtGui.QGraphicsRectItem):
         self.lock_h = False
         self.lock_v = False
         self.collider_counter = 0
-        #print self.text
+        self.con_lock = False
+        # self.terminal1 = Terminal(self)
+        # self.terminal2 = Terminal(self)
         # caso o item a ser inserido seja do tipo subestacao
         if self.myItemType == self.Subestacao:
             rect = QtCore.QRectF(0, 0, 50.0, 50.0)
@@ -344,8 +346,6 @@ class Node(QtGui.QGraphicsRectItem):
         elif self.myItemType == self.Religador:
             rect = QtCore.QRectF(0, 0, 40.0, 40.0)
             # Cria o objeto abstrato chave referente ao religador
-            self.terminal1 = Terminal()
-            self.terminal2 = Terminal()
             self.chave = Religador("Identificador",0,0,0,0,0,self.id)
             # definine e ajusta a posicao do label do item grafico
             self.text = Text('Religador', self, self.scene())
@@ -358,6 +358,7 @@ class Node(QtGui.QGraphicsRectItem):
             # definine e ajusta a posicao do label do item grafico
             self.text = Text('Barra', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
+            self.terminals = []
         # caso o item a ser inserido seja do tipo agent
         elif self.myItemType == self.Agent:
             rect = QtCore.QRectF(0, 0, 50.0, 50.0)
@@ -520,6 +521,7 @@ class Node(QtGui.QGraphicsRectItem):
         return QtGui.QGraphicsItem.itemChange(self, change, value)
 
     def mousePressEvent(self, mouse_event):
+        print len(self.edges)
         self.cena = self.scene()
         self.mouse_event_ref_x = mouse_event.scenePos().x()
         self.mouse_event_ref_y = mouse_event.scenePos().y()
@@ -536,8 +538,6 @@ class Node(QtGui.QGraphicsRectItem):
         self.scene().clearSelection()
         # print "Id:", self.chave.nome, ",", "Corrente Nominal:", self.chave.ratedCurrent, ",", "Breaking Capacity:", self.chave.breakingCapacity, ",", "Seq de Religamento", self.chave.recloseSequences
         self.setSelected(True)
-        print "num edges:"
-        print len(self.edges)
         super(Node, self).mousePressEvent(mouse_event)
         return
 
@@ -558,7 +558,8 @@ class Node(QtGui.QGraphicsRectItem):
                         self.line_ref_x = QtCore.QLineF(QtCore.QPointF(pos_x_init, pos_y_init), QtCore.QPointF(item.pos().x(), pos_y_init))
                         self.line_final_x.setLine(self.line_ref_x)
                         self.collider_counter += 1
-                        self.scene().removeItem(self.line_final_y)
+                        if self.line_final_y.scene() != None:
+                            self.scene().removeItem(self.line_final_y)
                         self.lock_h = True
                         self.lock_v = True
                         return
@@ -566,7 +567,8 @@ class Node(QtGui.QGraphicsRectItem):
                         self.setX(item.pos().x())
                         self.line_ref_y = QtCore.QLineF(QtCore.QPointF(pos_x_init, pos_y_init), QtCore.QPointF(pos_x_init, item.pos().y()))
                         self.line_final_y.setLine(self.line_ref_y)
-                        self.scene().removeItem(self.line_final_x)
+                        if self.line_final_x.scene() != None:
+                            self.scene().removeItem(self.line_final_x)
                         self.collider_counter += 1
                         self.lock_v = True
                         self.lock_h = True
@@ -597,8 +599,10 @@ class Node(QtGui.QGraphicsRectItem):
         self.line_final_x.setLine(self.line_ref_x)
         self.line_ref_y = QtCore.QLineF(QtCore.QPointF(pos_x_init, pos_y_init -150), QtCore.QPointF(pos_x_init, pos_y_init + 190)) 
         self.line_final_y.setLine(self.line_ref_y)
-        self.scene().removeItem(self.line_final_x)
-        self.scene().removeItem(self.line_final_y)
+        if self.line_final_x.scene() != None:
+            self.scene().removeItem(self.line_final_x)
+        if self.line_final_y.scene() != None:
+            self.scene().removeItem(self.line_final_y)
         return
 
 
@@ -608,9 +612,10 @@ class Node(QtGui.QGraphicsRectItem):
         else:
             self.collider_counter = 0
             self.lock_h = False
-            self.cena.removeItem(self.line_final_x)
-            self.cena.removeItem(self.line_final_y)
-        print "=================RELEASE EVENT======================="
+            if self.line_final_x.scene() != None:
+                self.scene().removeItem(self.line_final_x)
+            if self.line_final_y.scene() != None:
+                self.scene().removeItem(self.line_final_y)
         super(Node, self).mouseReleaseEvent(mouse_event)
         new_edge = None
         scene = self.scene()
@@ -648,7 +653,6 @@ class Node(QtGui.QGraphicsRectItem):
                         self.setPos(pos.x()-5, pos.y()-5)
                         scene.break_edge(item, break_mode, self)
         scene.removeItem(ell)
-        print "=================END OF RELEASE EVENT======================="
         return
 
     def contextMenuEvent(self, event):
@@ -695,6 +699,7 @@ class SceneWidget(QtGui.QGraphicsScene):
         self.create_dict(10,15,4,'ABB')
         self.create_dict(12,10,3,'SEL')
         self.create_dict(9,11,2,'BOSCH')
+        self.lista_no_conectivo = []
 
 
     def create_dict(self, corrente, capacidade, num_rel, padrao):
@@ -711,6 +716,19 @@ class SceneWidget(QtGui.QGraphicsScene):
         self.pressPos = mouse_event.scenePos()
         self.break_mode = 2
         self.edge_broken = None
+        # print "=========================Lista de Nós Conectivos=========================\n\n"
+        # for no in self.lista_no_conectivo:
+        #     print str(id(no)) + "\n"
+        # print "=========================================================================\n\n"
+        # for no in self.lista_no_conectivo:
+        #     print "===============================NÓ CONECTIVO - " + str(id(no)) + "============\n\n"
+        #     for no2 in no.terminal_list:
+        #         print "terminal: " + str(id(no2)) + "\n" + "objeto: " + str(id(no2.parent)) + "\n" + "Posição: " + str(no2.parent.scenePos()) + "\n"
+        #     print "=====================================================================\n\n"
+
+        # print "--------------------------------------------------------------------------"
+
+
 
         if (mouse_event.button() != QtCore.Qt.LeftButton):
             node_priority = False
@@ -803,8 +821,6 @@ class SceneWidget(QtGui.QGraphicsScene):
                 QtGui.QPen(QtCore.Qt.black, 2))
             self.addItem(self.line)
             self.removeItem(ell)
-            print "start item:"
-            print self.start_item
 
         elif self.myMode == self.InsertText:
             text_item = Text()
@@ -846,7 +862,6 @@ class SceneWidget(QtGui.QGraphicsScene):
                         if isinstance(item, Node):
                             priority_node = True
                         priority_on = True
-                        print priority_on
             for item in self.items():
                 if ell.collidesWithItem(item):
                     if isinstance(item, QtGui.QGraphicsEllipseItem) and not priority_on:
@@ -855,16 +870,13 @@ class SceneWidget(QtGui.QGraphicsScene):
                         self.removeItem(ell)
                         self.clearSelection()
                         item.setSelected(True)
-                        print "lets check"
                     elif isinstance(item, Edge) and not priority_node:
                         self.removeItem(ell)
                         self.clearSelection()
-                        item.setSelected(True)
-                        print "lets check"                        
+                        item.setSelected(True)                    
                         return
-            self.removeItem(ell)
-            print "opa"
-        
+            if ell.scene() == self:
+                self.removeItem(ell)
 
         return
 
@@ -880,6 +892,7 @@ class SceneWidget(QtGui.QGraphicsScene):
             self.line.setLine(new_line)
         elif self.myMode == self.MoveItem:
             super(SceneWidget, self).mouseMoveEvent(mouse_event)
+            return
         elif self.myMode == self.SelectItems and self.selectRect:
             new_rect = QtCore.QRectF(
                 self.selectRect.rect().topLeft(), mouse_event.scenePos())
@@ -897,7 +910,8 @@ class SceneWidget(QtGui.QGraphicsScene):
             node_priority = False
             edge_priority = False
             block_on = False
-            self.removeItem(self.no)
+            if self.no != None:
+                self.removeItem(self.no)
             # if self.start_item.myItemType == Node.NoConectivo:
             #     self.addItem(self.start_item)
             ell = QtGui.QGraphicsEllipseItem()
@@ -943,7 +957,6 @@ class SceneWidget(QtGui.QGraphicsScene):
                                     self.removeItem(ell)
                                     return
                         self.end_item = item
-                        print "checkpoint 1"
 
                     elif isinstance(item, Edge) and not node_priority:
                         if block_on is True:
@@ -956,12 +969,9 @@ class SceneWidget(QtGui.QGraphicsScene):
                         self.end_item.setPos(c_pos + QtCore.QPointF(-3.5, -3.5))
                         self.break_mode = 1
                         self.edge_broken = item
-                        print "checkpoint 2"
                     elif isinstance(item, QtGui.QGraphicsEllipseItem) and not node_priority and not edge_priority:
                         self.end_item = Node(Node.NoConectivo, self.myLineMenu)
                         self.end_item.setPos(mouse_event.scenePos())
-                        print "checkpoint 3"
-
             self.removeItem(self.line)
             self.line = None
             self.removeItem(ell)
@@ -994,18 +1004,62 @@ class SceneWidget(QtGui.QGraphicsScene):
             if self.edge_broken is not None and self.edge_broken.isPermanent:
                 return
 
-            self.addItem(self.start_item)
-            self.addItem(self.end_item)
+            if self.start_item.scene() == None:
+                self.addItem(self.start_item)
+            if self.end_item.scene() == None:
+                self.addItem(self.end_item)
 
             edge = Edge(self.start_item, self.end_item, self.myLineMenu)
             self.addItem(edge)
-            print "scene:"
-            print edge.scene()
+
+            # # Adição de terminais e nós conectivos virtuais
+            # no_conectivo_1 = NoConect([])
+            # no_conectivo_2 = NoConect([])
+            
+            # if edge.w1.myItemType != Node.NoConectivo:
+
+            #     if edge.w1.terminal1.connected:
+            #         if edge.w1.terminal2.connected:
+            #             pass
+            #         else:
+            #             no_conectivo_1.terminal_list.append(edge.w1.terminal2)
+            #             edge.w1.terminal2.connect()
+            #             no_conectivo_1.terminal_list.append(edge.terminal1)
+            #             edge.terminal1.connect()
+            #             self.lista_no_conectivo.append(no_conectivo_1)
+            #             no_conectivo_1.define_no()
+            #     else:
+            #         no_conectivo_1.terminal_list.append(edge.w1.terminal1)
+            #         edge.w1.terminal1.connect()
+            #         no_conectivo_1.terminal_list.append(edge.terminal1)
+            #         edge.terminal1.connect()
+            #         self.lista_no_conectivo.append(no_conectivo_1)
+            #         no_conectivo_1.define_no()
+
+            # if edge.w2.myItemType != Node.NoConectivo:
+
+            #     if edge.w2.terminal1.connected:
+            #         if edge.w2.terminal2.connected:
+            #             pass
+            #         else:
+            #             no_conectivo_2.terminal_list.append(edge.w2.terminal2)
+            #             edge.w2.terminal2.connect()
+            #             no_conectivo_2.terminal_list.append(edge.terminal2)
+            #             edge.terminal2.connect()
+            #             self.lista_no_conectivo.append(no_conectivo_2)
+            #             no_conectivo_2.define_no()
+            #     else:
+            #         no_conectivo_2.terminal_list.append(edge.w2.terminal1)
+            #         edge.w2.terminal1.connect()
+            #         no_conectivo_2.terminal_list.append(edge.terminal2)
+            #         edge.terminal2.connect()
+            #         self.lista_no_conectivo.append(no_conectivo_2)
+            #         no_conectivo_2.define_no()
+
+
             edge.set_color(QtCore.Qt.black)
             # self.addItem(edge.GhostRetItem)
             edge.update_position()
-            print "b mode"
-            print self.break_mode
             #Teste de quebra de linha
             self.break_edge(self.edge_broken, self.break_mode, edge)
 
@@ -1039,7 +1093,6 @@ class SceneWidget(QtGui.QGraphicsScene):
         self.itemInserted.emit(3)
         self.ghost = None
         super(SceneWidget, self).mouseReleaseEvent(mouse_event)
-        print "END SCENE"
 
         #     Problema quando tenta-se modificar o texto dos componentes
     def keyPressEvent(self, event):
@@ -1047,10 +1100,8 @@ class SceneWidget(QtGui.QGraphicsScene):
         if self.keyControlIsPressed == True:
             if key == QtCore.Qt.Key_Z:
                 self.undoStack.undo()
-                print self.undoStack.index()
             if key == QtCore.Qt.Key_Y:
                 self.undoStack.redo()
-                print self.undoStack.index()
         if key == QtCore.Qt.Key_Up:
             for item in self.selectedItems():
                 item.moveBy(0, -5)
@@ -1060,7 +1111,6 @@ class SceneWidget(QtGui.QGraphicsScene):
         elif key == QtCore.Qt.Key_Left:
             for item in self.selectedItems():
                 item.moveBy(-5, 0)
-            print self.undoStack.index()
         elif key == QtCore.Qt.Key_Right:
             for item in self.selectedItems():
                 item.moveBy(5, 0)
@@ -1112,7 +1162,6 @@ class SceneWidget(QtGui.QGraphicsScene):
                 w.append(edge.w2)
             elif edge.w2 == item:
                 w.append(edge.w1)
-            print w
         item.remove_edges()
         new_edge = Edge(w[0], w[1], self.myLineMenu)
         self.addItem(new_edge)
@@ -1189,12 +1238,23 @@ class SceneWidget(QtGui.QGraphicsScene):
             Este método implementa a ação de exclusão de um item gráfico do
             diagrama.
         '''
-        print self.selectedItems()
         for item in self.selectedItems():
+            item.Noc = None
             if isinstance(item, Node):
                 if item.myItemType != Node.NoConectivo:
+                    lista = item.edges
+                    if len(item.edges) >= 1:
+                        item.Noc = Node(Node.NoConectivo, self.myLineMenu)
+                        self.addItem(item.Noc)
+                        item.Noc.setPos(item.scenePos() + QtCore.QPointF(20, 20))
+                        for edge in lista:
+                            if edge.w1 == item:
+                                new_edge = Edge(item.Noc, edge.w2, self.myLineMenu)
+                            else:
+                                new_edge = Edge(item.Noc, edge.w1, self.myLineMenu)
+                            self.addItem(new_edge)
+                    command = add_remove_command("Remove", self, item)
                     item.remove_edges()
-
                 if len(item.edges) > 2:
                     dialog = AvisoConexaoDialog()
                     return
@@ -1203,15 +1263,13 @@ class SceneWidget(QtGui.QGraphicsScene):
             if isinstance(item, Edge):
                 if item.w1.myItemType == Node.NoConectivo and len(item.w1.edges) <= 1:
                     self.removeItem(item.w1)
-                    print "entrou"
                 if item.w2.myItemType == Node.NoConectivo and len(item.w2.edges) <= 1:
                     self.removeItem(item.w2)
-                    print "entrou"
                 item.w1.remove_edge(item)
                 item.w2.remove_edge(item)
                 # self.removeItem(item.GhostRetItem)
             self.removeItem(item)
-            command = add_remove_command("Remove", self, item)
+            
             self.undoStack.push(command)
 
 
@@ -1371,8 +1429,6 @@ class SceneWidget(QtGui.QGraphicsScene):
                 else:
                     y_pos_list.append(item.pos().y())
 
-        print len(y_pos_list)
-        print y_pos_list
         max_pos = max(y_pos_list)
         min_pos = min(y_pos_list)
         mean_pos = max_pos - abs(max_pos - min_pos) / 2.0
@@ -1385,15 +1441,9 @@ class SceneWidget(QtGui.QGraphicsScene):
                         first_priority = True
 
 
-
-        print "mean_pos"
-        print mean_pos
-
         for item in self.selectedItems():
             if isinstance(item, Node):
                 pos = mean_pos
-                print "===========COMEÇO LOOP=================="
-                print has_bar_priority, has_pos_priority, first_priority
 
                 if item.Fixed is True:
                     continue
@@ -1426,19 +1476,15 @@ class SceneWidget(QtGui.QGraphicsScene):
                     pos = pos_item
 
                 if item.myItemType == Node.NoConectivo:
-                    print "no conectivo"
                     pos = pos + 17
 
                 if item.myItemType == Node.NoDeCarga:
                     pos = pos + 15
 
                 if item.myItemType == Node.Barra:
-                    print "Node Barra"
                     pos = pos_barra
 
                 item.setY(pos)
-                print "===========FIM LOOP=================="
-        print mean_pos
 
 
 
@@ -1520,8 +1566,23 @@ class add_remove_command(QtGui.QUndoCommand):
     def undo(self):
         if self.mode == "Add":
             self.scene.removeItem(self.item)
+
+
         if self.mode == "Remove":
             self.scene.addItem(self.item)
+            if self.item.Noc != None:
+                lista = self.item.Noc.edges    
+                for edge in lista:
+                    if edge.w1 == self.item.Noc:
+                        new_edge = Edge(self.item, edge.w2, self.scene.myLineMenu)
+                    else:
+                        new_edge = Edge(self.item, edge.w1, self.scene.myLineMenu)
+                    self.scene.addItem(new_edge)
+                self.item.Noc.remove_edges()
+                self.scene.removeItem(self.item.Noc)
+
+
+                
 
 # class add_remove_edge_break_command(QtGui.QUndoCommand):
 
