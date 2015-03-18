@@ -401,16 +401,16 @@ class CimXML():
                     # tag_terminal.append(str(item.terminal2.mRID))
                     # tag_CE.append(tag_terminal)
 
-        for terminal in self.lista_terminais:            
-            tag_CE = self.cim_xml.new_tag("ConductingEquipment")
-            self.cim_xml.append(tag_CE)
+        # for terminal in self.lista_terminais:            
+        #     tag_CE = self.cim_xml.new_tag("ConductingEquipment")
+        #     self.cim_xml.append(tag_CE)
 
-            tag_mRID = self.cim_xml.new_tag("mRID")
-            tag_mRID.append(str(terminal.mRID))
+        #     tag_mRID = self.cim_xml.new_tag("mRID")
+        #     tag_mRID.append(str(terminal.mRID))
 
-            tag_terminal = self.cim_xml.new_tag("terminal")
-            tag_terminal.append(tag_mRID)
-            tag_CE.append(tag_terminal)
+        #     tag_terminal = self.cim_xml.new_tag("terminal")
+        #     tag_terminal.append(tag_mRID)
+        #     tag_CE.append(tag_terminal)
 
         for no in self.lista_no_conectivo:
             tag_mRID = self.cim_xml.new_tag("mRID")

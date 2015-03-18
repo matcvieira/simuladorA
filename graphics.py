@@ -697,9 +697,9 @@ class SceneWidget(QtGui.QGraphicsScene):
         self.undoStack = QtGui.QUndoStack()
         self.custom_dict = {'Corrente Nominal': 0, 'Capacidade de Interrupcao': 0, 'Sequencia':0}
         self.dict_prop = {}
-        self.create_dict(10,15,4,'ABB')
-        self.create_dict(12,10,3,'SEL')
-        self.create_dict(9,11,2,'BOSCH')
+        self.create_dict(100,4,4,'ABB')
+        self.create_dict(150,5,3,'SEL')
+        self.create_dict(200,6,3,'BOSCH')
         self.lista_no_conectivo = []
 
 
@@ -1254,7 +1254,6 @@ class SceneWidget(QtGui.QGraphicsScene):
                             else:
                                 new_edge = Edge(item.Noc, edge.w1, self.myLineMenu)
                             self.addItem(new_edge)
-                    command = add_remove_command("Remove", self, item)
                     item.remove_edges()
                 if len(item.edges) > 2:
                     dialog = AvisoConexaoDialog()
@@ -1270,6 +1269,7 @@ class SceneWidget(QtGui.QGraphicsScene):
                 item.w2.remove_edge(item)
                 # self.removeItem(item.GhostRetItem)
             self.removeItem(item)
+            command = add_remove_command("Remove", self, item)
             
             self.undoStack.push(command)
 
