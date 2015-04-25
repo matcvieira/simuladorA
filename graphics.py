@@ -546,68 +546,70 @@ class Node(QtGui.QGraphicsRectItem):
         return
 
     def mouseMoveEvent(self, mouse_event):
-        self.pressed = False
-        if self.lock_h is False:
-            self.scene().addItem(self.line_final_x)
-        if self.lock_v is False:    
-            self.scene().addItem(self.line_final_y)
+        if self.myItemType == Node.Religador:
+            self.pressed = False
+            if self.lock_h is False:
+                self.scene().addItem(self.line_final_x)
+            if self.lock_v is False:    
+                self.scene().addItem(self.line_final_y)
 
-        pos_x_init = self.pos().x() + 20
-        pos_y_init = self.pos().y() + 20
-        for item in self.scene().items():
-            if isinstance(item, Node):
-                if item.myItemType == Node.Religador and item != self and self.collider_counter < 10:
-                    if item.collidesWithItem(self.line_final_x):
-                        self.setY(item.pos().y())
-                        self.line_ref_x = QtCore.QLineF(QtCore.QPointF(pos_x_init, pos_y_init), QtCore.QPointF(item.pos().x(), pos_y_init))
-                        self.line_final_x.setLine(self.line_ref_x)
-                        self.collider_counter += 1
-                        if self.line_final_y.scene() != None:
-                            self.scene().removeItem(self.line_final_y)
-                        self.lock_h = True
-                        self.lock_v = True
-                        return
-                    elif item.collidesWithItem(self.line_final_y):
-                        self.setX(item.pos().x())
-                        self.line_ref_y = QtCore.QLineF(QtCore.QPointF(pos_x_init, pos_y_init), QtCore.QPointF(pos_x_init, item.pos().y()))
-                        self.line_final_y.setLine(self.line_ref_y)
-                        if self.line_final_x.scene() != None:
-                            self.scene().removeItem(self.line_final_x)
-                        self.collider_counter += 1
-                        self.lock_v = True
-                        self.lock_h = True
-                        return
-        self.collider_counter += 1
-        if self.collider_counter > 20:
-            self.collider_counter = 0
-        self.cena = self.scene()
-        self.lock_h = False
-        self.lock_v = False
-        deltax = math.fabs(mouse_event.scenePos().x() - self.mouse_event_ref_x)
-        deltay = math.fabs(mouse_event.scenePos().y() - self.mouse_event_ref_y)
-
-        # self.mouse_event_ref = mouse_event.scenePos()
-        if deltax < 20:
-            pass
-        else:
-            self.setX(mouse_event.scenePos().x() - 20)
-            self.mouse_event_ref_x = mouse_event.scenePos().x()
             pos_x_init = self.pos().x() + 20
-        if deltay < 20:
-            pass
-        else:
-            self.setY(mouse_event.scenePos().y() - 20)
-            self.mouse_event_ref_y = mouse_event.scenePos().y()
-            pox_y_init = self.pos().y() + 20
-        self.line_ref_x = QtCore.QLineF(QtCore.QPointF(pos_x_init -150, pos_y_init), QtCore.QPointF(pos_x_init + 190, pos_y_init)) 
-        self.line_final_x.setLine(self.line_ref_x)
-        self.line_ref_y = QtCore.QLineF(QtCore.QPointF(pos_x_init, pos_y_init -150), QtCore.QPointF(pos_x_init, pos_y_init + 190)) 
-        self.line_final_y.setLine(self.line_ref_y)
-        if self.line_final_x.scene() != None:
-            self.scene().removeItem(self.line_final_x)
-        if self.line_final_y.scene() != None:
-            self.scene().removeItem(self.line_final_y)
-        return
+            pos_y_init = self.pos().y() + 20
+            for item in self.scene().items():
+                if isinstance(item, Node):
+                    if item.myItemType == Node.Religador and item != self and self.collider_counter < 10:
+                        if item.collidesWithItem(self.line_final_x):
+                            self.setY(item.pos().y())
+                            self.line_ref_x = QtCore.QLineF(QtCore.QPointF(pos_x_init, pos_y_init), QtCore.QPointF(item.pos().x(), pos_y_init))
+                            self.line_final_x.setLine(self.line_ref_x)
+                            self.collider_counter += 1
+                            if self.line_final_y.scene() != None:
+                                self.scene().removeItem(self.line_final_y)
+                            self.lock_h = True
+                            self.lock_v = True
+                            return
+                        elif item.collidesWithItem(self.line_final_y):
+                            self.setX(item.pos().x())
+                            self.line_ref_y = QtCore.QLineF(QtCore.QPointF(pos_x_init, pos_y_init), QtCore.QPointF(pos_x_init, item.pos().y()))
+                            self.line_final_y.setLine(self.line_ref_y)
+                            if self.line_final_x.scene() != None:
+                                self.scene().removeItem(self.line_final_x)
+                            self.collider_counter += 1
+                            self.lock_v = True
+                            self.lock_h = True
+                            return
+            self.collider_counter += 1
+            if self.collider_counter > 20:
+                self.collider_counter = 0
+            self.cena = self.scene()
+            self.lock_h = False
+            self.lock_v = False
+            deltax = math.fabs(mouse_event.scenePos().x() - self.mouse_event_ref_x)
+            deltay = math.fabs(mouse_event.scenePos().y() - self.mouse_event_ref_y)
+
+            # self.mouse_event_ref = mouse_event.scenePos()
+            if deltax < 20:
+                pass
+            else:
+                self.setX(mouse_event.scenePos().x() - 20)
+                self.mouse_event_ref_x = mouse_event.scenePos().x()
+                pos_x_init = self.pos().x() + 20
+            if deltay < 20:
+                pass
+            else:
+                self.setY(mouse_event.scenePos().y() - 20)
+                self.mouse_event_ref_y = mouse_event.scenePos().y()
+                pox_y_init = self.pos().y() + 20
+            self.line_ref_x = QtCore.QLineF(QtCore.QPointF(pos_x_init -150, pos_y_init), QtCore.QPointF(pos_x_init + 190, pos_y_init)) 
+            self.line_final_x.setLine(self.line_ref_x)
+            self.line_ref_y = QtCore.QLineF(QtCore.QPointF(pos_x_init, pos_y_init -150), QtCore.QPointF(pos_x_init, pos_y_init + 190)) 
+            self.line_final_y.setLine(self.line_ref_y)
+            if self.line_final_x.scene() != None:
+                self.scene().removeItem(self.line_final_x)
+            if self.line_final_y.scene() != None:
+                self.scene().removeItem(self.line_final_y)
+            return
+        super(Node,self).mouseMoveEvent(mouse_event)
 
 
     def mouseReleaseEvent(self, mouse_event):
@@ -647,15 +649,20 @@ class Node(QtGui.QGraphicsRectItem):
 
 
         if self.myItemType == Node.NoDeCarga:
+            scene.removeItem(ell)
+            if self.scene().myMode == 1:
+                return
             for item in scene.items():
                 if self.collidesWithItem(item):
+                    print item
                     if isinstance(item, Edge) and not item.isUnderMouse():
                         if item.line().length() < 130:
                             return
                         break_mode = 3
                         pos = item.get_fraction(mouse_event.scenePos())
                         self.setPos(pos.x()-5, pos.y()-5)
-                        scene.break_edge(item, break_mode, self)
+                        scene.break_edge(item, break_mode, None, self)
+
         scene.removeItem(ell)
         return
 
@@ -896,6 +903,7 @@ class SceneWidget(QtGui.QGraphicsScene):
             linha quando o modo self.InsertLine está ativado
         '''
         if self.myMode == self.InsertLine and self.line:
+            self.clearSelection()
             new_line = QtCore.QLineF(
                 self.line.line().p1(), mouse_event.scenePos())
             self.line.setLine(new_line)
@@ -984,6 +992,7 @@ class SceneWidget(QtGui.QGraphicsScene):
             self.removeItem(self.line)
             self.line = None
             self.removeItem(ell)
+            print "checkpoint"
 
             # Testes posteriores do start_item e end_item
             if self.start_item.myItemType == Node.Barra:
@@ -1020,6 +1029,7 @@ class SceneWidget(QtGui.QGraphicsScene):
 
             edge = Edge(self.start_item, self.end_item, self.myLineMenu)
             self.addItem(edge)
+
 
             # # Adição de terminais e nós conectivos virtuais
             # no_conectivo_1 = NoConect([])
