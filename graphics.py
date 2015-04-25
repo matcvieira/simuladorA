@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 from PySide import QtCore, QtGui
 import math
 import sys
@@ -10,6 +9,7 @@ from DialogLine import LineDialog
 from DialogBarra import BarraDialog
 from DialogConductor import ConductorDialog
 from DialogSubstation import SubstationDialog
+from DialogEnergyConsumer import EnergyConsumerDialog
 from aviso_conexao import AvisoConexaoDialog
 
 lista_no_conectivo = []
@@ -347,7 +347,7 @@ class Node(QtGui.QGraphicsRectItem):
         elif self.myItemType == self.Religador:
             rect = QtCore.QRectF(0, 0, 40.0, 40.0)
             # Cria o objeto abstrato chave referente ao religador
-            self.chave = Religador("Identificador",0,0,0,0,0,self.id)
+            self.chave = Religador("Identificador",0,0,0,0,1)
             # definine e ajusta a posicao do label do item grafico
             self.text = Text('Religador', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
@@ -372,6 +372,7 @@ class Node(QtGui.QGraphicsRectItem):
 
         elif self.myItemType == self.NoDeCarga:
             rect = QtCore.QRectF(0, 0, 12, 12)
+            self.no_de_carga = EnergyConsumer("Identificador", 0, 0)
             self.text = Text('Carga', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
 
@@ -1329,7 +1330,6 @@ class SceneWidget(QtGui.QGraphicsScene):
                             pass
                         else:
                             item.substation.tensao_primario = dialog.tpLineEdit.text()
-
             if isinstance(item, Edge):
                 dialog = ConductorDialog(item)
                 if dialog.dialog.result() == 1:
@@ -1357,6 +1357,23 @@ class SceneWidget(QtGui.QGraphicsScene):
                             pass
                         else:
                             item.linha.ampacidade = dialog.ampacidadeLineEdit.text()
+        
+            if isinstance(item, Node):
+                if item.myItemType == Node.NoDeCarga:
+    	            dialog = EnergyConsumerDialog(item)
+    	            if dialog.dialog.result() == 1:
+    	                    if dialog.identificaOLineEdit.text() == "":
+    	                        pass
+    	                    else:
+    	                        item.no_de_carga.nome = dialog.identificaOLineEdit.text()
+    	                    if dialog.potNciaAtivaLineEdit.text() == "":
+    	                        pass
+    	                    else:
+    	                        item.no_de_carga.potencia_ativa = dialog.potNciaAtivaLineEdit.text() 
+    	                    if dialog.potNciaReativaLineEdit.text() == "":
+    	                        pass
+    	                    else:
+    	                        item.no_de_carga.potencia_reativa = dialog.potNciaReativaLineEdit.text()
 
     def increase_bus(self):
         '''
