@@ -374,11 +374,9 @@ class Node(QtGui.QGraphicsRectItem):
 
         elif self.myItemType == self.NoDeCarga:
             rect = QtCore.QRectF(0, 0, 12, 12)
-<<<<<<< HEAD
-            self.no_de_carga = EnergyConsumer("Identificador", 0)
-=======
+
             self.no_de_carga = EnergyConsumer("Identificador", 0, 0)
->>>>>>> origin/dev
+
             self.text = Text('Carga', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
 
