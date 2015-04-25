@@ -4,7 +4,7 @@
 
 
 class Religador(object):
-     def __init__(self, nome=None, rated_current=None, in_transit_time=None, breaking_capacity=None, reclose_sequences=None, estado=1, mRID = None):
+     def __init__(self, nome=None, rated_current=None, in_transit_time=None, breaking_capacity=None, reclose_sequences=None, estado=1):
         assert estado == 1 or estado == 0, 'O parâmetro estado deve ser um inteiro de valor 1 ou 0'
         self.normalOpen = estado
         self.ratedCurrent = rated_current
@@ -12,14 +12,14 @@ class Religador(object):
         self.breakingCapacity = breaking_capacity
         self.recloseSequences = reclose_sequences
         self.nome = nome
-        self.mRID = mRID
 
 
 class EnergyConsumer(object):
-    def __init__(self, nome, pfixed = 0):
+    def __init__(self, nome, pfixed = 0, qfixed = 0):
         self.id = id(self)
         self.nome = nome
         self.potencia_ativa = pfixed
+        self.potencia_reativa = qfixed
 
 
 class Substation(object):
@@ -46,7 +46,6 @@ class Condutor(object):
         self.reatancia = x
         self.reatancia_zero = x0
         self.ampacidade = currentLimit
-
 
 class NoConect(object):
     def __init__(self, terminal_list):
@@ -80,3 +79,6 @@ class Terminal(object):
                 self.parent.scene().lista_no_conectivo.remove(self.no)
 
 
+
+
+        
