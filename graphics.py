@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 from PySide import QtCore, QtGui
 import math
 import sys
@@ -347,7 +346,7 @@ class Node(QtGui.QGraphicsRectItem):
         elif self.myItemType == self.Religador:
             rect = QtCore.QRectF(0, 0, 40.0, 40.0)
             # Cria o objeto abstrato chave referente ao religador
-            self.chave = Religador("Identificador",0,0,0,0,0,self.id)
+            self.chave = Religador("Identificador",0,0,0,0,0)
             # definine e ajusta a posicao do label do item grafico
             self.text = Text('Religador', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
@@ -372,6 +371,7 @@ class Node(QtGui.QGraphicsRectItem):
 
         elif self.myItemType == self.NoDeCarga:
             rect = QtCore.QRectF(0, 0, 12, 12)
+            self.no_de_carga = EnergyConsumer("Identificador", 0)
             self.text = Text('Carga', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
 
@@ -482,7 +482,10 @@ class Node(QtGui.QGraphicsRectItem):
         # caso o item a ser inserido seja do tipo religador1
         elif self.myItemType == self.Religador:
             painter.setPen(QtGui.QPen(QtCore.Qt.black, 2))
-            painter.setBrush(QtCore.Qt.white)
+            if self.chave.normalOpen == 1:
+                painter.setBrush(QtCore.Qt.black)
+            else:
+                painter.setBrush(QtCore.Qt.white)
             painter.drawRoundedRect(self.rect(), 5, 5)
         # caso o item a ser inserido seja do tipo barra
         elif self.myItemType == self.Barra:
@@ -655,6 +658,11 @@ class Node(QtGui.QGraphicsRectItem):
                         scene.break_edge(item, break_mode, self)
         scene.removeItem(ell)
         return
+
+    def mouseDoubleClickEvent(self, event):
+        super(Node, self).mouseDoubleClickEvent(event)
+        if self.myItemType == Node.Religador:
+            self.chave.normalOpen = not self.chave.normalOpen
 
     def contextMenuEvent(self, event):
             self.scene().clearSelection()
@@ -1329,6 +1337,36 @@ class SceneWidget(QtGui.QGraphicsScene):
                             pass
                         else:
                             item.substation.tensao_primario = dialog.tpLineEdit.text()
+            if isinstance(item, Edge):
+                dialog = ConductorDialog(item)
+                if dialog.dialog.result() == 1:
+                        if dialog.comprimentoLineEdit.text() == "":
+                            pass
+                        else:
+                            item.linha.comprimento = dialog.comprimentoLineEdit.text()
+                        if dialog.resistenciaLineEdit.text() == "":
+                            pass
+                        else:
+                            item.linha.resistencia = dialog.resistenciaLineEdit.text()
+                        if dialog.resistenciaZeroLineEdit.text() == "":
+                            pass
+                        else:
+                            item.linha.resistencia_zero = dialog.resistenciaZeroLineEdit.text()
+                        if dialog.reatanciaLineEdit.text() == "":
+                            pass
+                        else:
+                            item.linha.reatancia = dialog.reatanciaLineEdit.text()
+                        if dialog.reatanciaZeroLineEdit.text() == "":
+                            pass
+                        else:
+                            item.linha.reatancia_zero = dialog.reatanciaZeroLineEdit.text()
+                        if dialog.ampacidadeLineEdit.text() == "":
+                            pass
+                        else:
+                            item.linha.ampacidade = dialog.ampacidadeLineEdit.text()
+
+
+
 
             if isinstance(item, Edge):
                 dialog = ConductorDialog(item)
