@@ -347,11 +347,9 @@ class Node(QtGui.QGraphicsRectItem):
         elif self.myItemType == self.Religador:
             rect = QtCore.QRectF(0, 0, 40.0, 40.0)
             # Cria o objeto abstrato chave referente ao religador
-<<<<<<< HEAD
-            self.chave = Religador("Identificador",0,0,0,0,0)
-=======
-            self.chave = Religador("Identificador",0,0,0,0,1)
->>>>>>> origin/dev
+
+            self.chave = Religador("Identificador",0,0,0,0,0)        
+
             # definine e ajusta a posicao do label do item grafico
             self.text = Text('Religador', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
