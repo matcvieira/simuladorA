@@ -286,9 +286,15 @@ class CimXML():
                     tag_id.append(str(item.id))
                     self.cim_xml.find("EnergyConsumer").append(tag_id)
 
-                    tag_terminal1 = self.cim_xml.new_tag("terminal1")
-                    tag_terminal1.append(str(item.terminal1.mRID))
-                    tag_energyConsumer.append(tag_terminal1)
+                    tag_pFixed = self.cim_xml.new_tag("pFixed")
+                    tag_pFixed.append(str(item.no_de_carga.potencia_ativa))
+                    self.cim_xml.find("EnergyConsumer").append(tag_pFixed)
+
+
+                    tag_qFixed = self.cim_xml.new_tag("qFixed")
+                    tag_qFixed.append(str(item.no_de_carga.potencia_reativa))
+                    self.cim_xml.find("EnergyConsumer").append(tag_qFixed)                   
+
 
                     tag_terminal1= self.cim_xml.new_tag("terminal")
                     tag_seqNumber = self.cim_xml.new_tag("SequenceNumber")

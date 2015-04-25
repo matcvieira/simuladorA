@@ -15,10 +15,11 @@ class Religador(object):
 
 
 class EnergyConsumer(object):
-    def __init__(self, nome, pfixed = 0):
+    def __init__(self, nome, pfixed = 0, qfixed = 0):
         self.id = id(self)
         self.nome = nome
         self.potencia_ativa = pfixed
+        self.potencia_reativa = qfixed
 
 
 class Substation(object):
@@ -76,12 +77,5 @@ class Terminal(object):
             print "remova!"
             if len(self.no.terminal_list) < 2:
                 self.parent.scene().lista_no_conectivo.remove(self.no)
-
-
-class EnergyConsumer(object):
-    def __init__(self, nome, pfixed = 0):
-        self.id = id(self)
-        self.nome = nome
-        self.potencia_ativa = pfixed
 
         
