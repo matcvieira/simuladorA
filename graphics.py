@@ -11,6 +11,7 @@ from DialogConductor import ConductorDialog
 from DialogSubstation import SubstationDialog
 from DialogEnergyConsumer import EnergyConsumerDialog
 from aviso_conexao import AvisoConexaoDialog
+from avisoReligador import AvisoReligador
 
 lista_no_conectivo = []
 
@@ -354,18 +355,15 @@ class Node(QtGui.QGraphicsRectItem):
         if self.myItemType == self.Subestacao:
             rect = QtCore.QRectF(0, 0, 50.0, 50.0)
             # definine e ajusta a posicao do label do item grafico
-            self.substation = Substation("Identificador", 0.0, 0.0, 0.0, complex(0,0))
-            self.text = Text('Subestacao', self, self.scene())
+            self.text = Text('', self, self.scene())
+            self.substation = Substation(self.text.toPlainText(), 0.0, 0.0, 0.0, complex(0,0))
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
         # caso o item a ser inserido seja do tipo religador
         elif self.myItemType == self.Religador:
             rect = QtCore.QRectF(0, 0, 20, 20)
-            # Cria o objeto abstrato chave referente ao religador
-
-               
-
+            # Cria o objeto abstrato chave referente ao religador 
             # definine e ajusta a posicao do label do item grafico
-            self.text = Text('Religador', self, self.scene())
+            self.text = Text('', self, self.scene())
             self.chave = Religador(self.text.toPlainText(),0,0,0,0,1)     
             self.text.setPos(self.mapFromItem(self.text, 10, rect.height()))
             
@@ -831,6 +829,12 @@ class SceneWidget(QtGui.QGraphicsScene):
 
             item.setPos(item.adjust_in_grid(mouse_event.scenePos()))
             self.addItem(item)
+            item.setSelected(True)
+            self.launch_dialog()
+            item.setSelected(False)
+            if item.chave.nome == '':
+                self.removeItem(item)
+            
             #item.setPos(mouse_event.scenePos())
             comando = add_remove_command("Add", self, item)
             self.undoStack.push(comando)
@@ -1187,8 +1191,7 @@ class SceneWidget(QtGui.QGraphicsScene):
         elif key == QtCore.Qt.Key_Delete:
             self.delete_item()
         elif key == QtCore.Qt.Key_Escape:
-            for item in self.items():
-                item.setSelected(False)
+            self.clearSelection()
         else:
             pass
             super(SceneWidget, self).keyPressEvent(event)
@@ -1251,13 +1254,18 @@ class SceneWidget(QtGui.QGraphicsScene):
         self.myMode = mode
 
     def change_state(self):
+        
+        
         for item in self.selectedItems():
-            print item
             if item.myItemType == Node.Religador:
-                item.chave.normalOpen = not item.chave.normalOpen
-                item.setSelected(False)
-                item.setSelected(True)
-                print item.chave.normalOpen
+                aviso = AvisoReligador(item.chave.normalOpen, item.chave.nome)
+                if aviso.dialog.result() == 1:                
+                    item.chave.normalOpen = not item.chave.normalOpen
+                    item.setSelected(False)
+                    item.setSelected(True)
+                    print item.chave.normalOpen
+                else:
+                    continue
 
     def create_actions(self):
         '''
