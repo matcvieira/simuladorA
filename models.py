@@ -4,7 +4,7 @@ from xml.dom import minidom
 from PySide import QtCore, QtGui
 from graphics import Node, Edge, Text
 from bs4 import BeautifulSoup
-from elementos import NoConect, Terminal, Religador
+from elementos import NoConect, Terminal, Religador, EnergyConsumer
 
 
 
@@ -50,37 +50,53 @@ class DiagramToXML(ElementTree.Element):
 
                 if item.myItemType == Node.Religador:
 
-                	padrao = ElementTree.Element('padrao')
-                	padrao.text = str(item.text_config)
+                    padrao = ElementTree.Element('padrao')
+                    padrao.text = str(item.text_config)
 
-                	identificador = ElementTree.Element('identificador')
-                	identificador.text = str(item.text.toPlainText())
+                    identificador = ElementTree.Element('identificador')
+                    identificador.text = str(item.text.toPlainText())
 
-                	corrente = ElementTree.Element('corrente')
-                	corrente.text = str(item.chave.ratedCurrent)
+                    corrente = ElementTree.Element('corrente')
+                    corrente.text = str(item.chave.ratedCurrent)
 
-                	in_tt = ElementTree.Element('intt')
-                	in_tt.text = str(item.chave.inTransitTime)
+                    in_tt = ElementTree.Element('intt')
+                    in_tt.text = str(item.chave.inTransitTime)
 
-                	cap_int = ElementTree.Element('capint')
-                	cap_int.text = str(item.chave.breakingCapacity)
+                    cap_int = ElementTree.Element('capint')
+                    cap_int.text = str(item.chave.breakingCapacity)
 
-                	seq_rel = ElementTree.Element('seqrel')
-                	seq_rel.text = str(item.chave.recloseSequences)
+                    seq_rel = ElementTree.Element('seqrel')
+                    seq_rel.text = str(item.chave.recloseSequences)
 
-	                estado = ElementTree.Element('estado')
-	                if item.chave.normalOpen == True:
-	                    state = 1
-	                else:
-	                    state = 0
-	                estado.text = str(state)
-	                CE.append(estado)
-	                CE.append(corrente)
-	                CE.append(in_tt)
-	                CE.append(cap_int)
-	                CE.append(seq_rel)
-	                CE.append(padrao)
-	                CE.append(identificador)
+                    estado = ElementTree.Element('estado')
+                    if item.chave.normalOpen == True:
+                        state = 1
+                    else:
+                        state = 0
+                    estado.text = str(state)
+                    CE.append(estado)
+                    CE.append(corrente)
+                    CE.append(in_tt)
+                    CE.append(cap_int)
+                    CE.append(seq_rel)
+                    CE.append(padrao)
+                    CE.append(identificador)
+
+                if item.myItemType == Node.NoDeCarga:
+                    identificador = ElementTree.Element('identificador')
+                    identificador.text = str(item.text.toPlainText())
+
+                    p_ativa = ElementTree.Element('pativa')
+                    p_ativa.text = str(item.no_de_carga.potencia_ativa)
+
+                    p_reativa = ElementTree.Element('preativa')
+                    p_reativa.text = str(item.no_de_carga.potencia_reativa)
+
+                    CE.append(identificador)
+                    CE.append(p_ativa)
+                    CE.append(p_reativa)
+
+
 
 
 
@@ -176,11 +192,18 @@ class XMLToDiagram():
 
                 elif child.attrib['type'] == '4':
                     item = Node(int(child.attrib['type']), self.scene.mySubstationMenu)
+                    p_ativa = child.find('pativa').text
+                    p_reativa = child.find('preativa').text
+                    identificador = str(child.find('identificador').text)
+                    item.no_de_carga = EnergyConsumer(identificador, p_ativa, p_reativa)
                     item.setPos(
                         float(child.find('x').text), float(
                             child.find('y').text))
                     item.id = int(child.find('id').text)
                     self.scene.addItem(item)
+                    if identificador != "None":
+                        print "Não é None"
+                        item.text.setPlainText(identificador)
 
                 elif child.attrib['type'] == '5':
                     item = Node(int(child.attrib['type']), None)

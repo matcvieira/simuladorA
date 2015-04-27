@@ -172,14 +172,25 @@ class Edge(QtGui.QGraphicsLineItem):
                     self.w1.edge_position(
                         self)), self.mapFromItem(
                     self.w2, self.w2.rect().center()))
+
+
                 # alinha o item religador conectado ao item Barra com a linha
                 # que conecta esses dois items
-                self.w2.setY(self.mapFromItem(
-                    self.w1, self.w1.rect().center().x(),
-                    self.w1.edge_position(
-                        self)).y() - 10)
-                self.w2.setPos(self.w2.adjust_in_grid(self.w2.scenePos()))
-                line.setLine(line.x1(),self.w2.scenePos().y()+10,line.x2(),line.y2())
+                # self.w2.setY(self.mapFromItem(
+                #     self.w1, self.w1.rect().center().x(),
+                #     self.w1.edge_position(
+                #         self)).y() - 10)
+                
+                pos = self.w2.adjust_in_grid(QtCore.QPointF(self.w2.scenePos().x(),line.y1()))
+                self.w2.setPos(pos)
+
+                line.setLine(line.x1(),self.w2.y()+10,line.x2(),line.y2())
+                
+
+
+                
+
+                #line.setLine(line.x1(),self.w2.scenePos().y()+10,line.x2(),line.y2())
                 if self.w2.myItemType == Node.NoConectivo:
                     self.w2.setY(self.mapFromItem(
                     self.w1, self.w1.rect().center().x(),
@@ -320,6 +331,7 @@ class Node(QtGui.QGraphicsRectItem):
             QtGui.QGraphicsRectItem.
         '''
         super(Node, self).__init__()
+        self.adjusted = False
         self.id = id(self)
         self.edges = {}
         self.l0 = None
@@ -355,7 +367,7 @@ class Node(QtGui.QGraphicsRectItem):
             # definine e ajusta a posicao do label do item grafico
             self.text = Text('Religador', self, self.scene())
             self.chave = Religador(self.text.toPlainText(),0,0,0,0,1)     
-            self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
+            self.text.setPos(self.mapFromItem(self.text, 10, rect.height()))
             
         # caso o item a ser inserido seja do tipo barra
         elif self.myItemType == self.Barra:
@@ -377,10 +389,12 @@ class Node(QtGui.QGraphicsRectItem):
 
         elif self.myItemType == self.NoDeCarga:
             rect = QtCore.QRectF(0, 0, 8, 8)
+            self.text = Text('',self,self.scene())
+            self.text.setPos(self.mapFromItem(self.text,0,rect.height()))
 
-            self.no_de_carga = EnergyConsumer("Identificador", 0, 0)
+            self.no_de_carga = EnergyConsumer('', 0, 0)
 
-            self.text = Text('Carga', self, self.scene())
+            self.text = Text('', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
 
         self.setRect(rect)
@@ -625,8 +639,9 @@ class Node(QtGui.QGraphicsRectItem):
             self.chave.normalOpen = not self.chave.normalOpen
 
     def adjust_in_grid(self,pos):
-        item_x = pos.x()
-        item_y = pos.y()
+        self.adjusted = True
+        item_x = pos.x()-5
+        item_y = pos.y()-5
         if item_x ==0 or item_y ==0:
             return
         centena_x = int(item_x/100)*100
@@ -1355,6 +1370,7 @@ class SceneWidget(QtGui.QGraphicsScene):
                 if item.myItemType == Node.Barra:
                     dialog = BarraDialog(item)
                     if dialog.dialog.result() == 1:
+                        item.text.setPlainText(dialog.identificaOLineEdit.text())
                         if dialog.nomeLineEdit.text() == "":
                             pass
                         else:
@@ -1368,6 +1384,7 @@ class SceneWidget(QtGui.QGraphicsScene):
                 if item.myItemType == Node.Subestacao:
                     dialog = SubstationDialog(item)
                     if dialog.dialog.result() == 1:
+                        item.text.setPlainText(dialog.identificaOLineEdit.text())
                         if dialog.nomeLineEdit.text() == "":
                             pass
                         else:
@@ -1409,18 +1426,19 @@ class SceneWidget(QtGui.QGraphicsScene):
                 if item.myItemType == Node.NoDeCarga:
                     dialog = EnergyConsumerDialog(item)
                     if dialog.dialog.result() == 1:
-                            if dialog.identificaOLineEdit.text() == "":
-                                pass
-                            else:
-                                item.no_de_carga.nome = dialog.identificaOLineEdit.text()
-                            if dialog.potNciaAtivaLineEdit.text() == "":
-                                pass
-                            else:
-                                item.no_de_carga.potencia_ativa = dialog.potNciaAtivaLineEdit.text() 
-                            if dialog.potNciaReativaLineEdit.text() == "":
-                                pass
-                            else:
-                                item.no_de_carga.potencia_reativa = dialog.potNciaReativaLineEdit.text()
+                        item.text.setPlainText(dialog.identificaOLineEdit.text())
+                        if dialog.identificaOLineEdit.text() == "":
+                            pass
+                        else:
+                            item.no_de_carga.nome = dialog.identificaOLineEdit.text()
+                        if dialog.potNciaAtivaLineEdit.text() == "":
+                            pass
+                        else:
+                            item.no_de_carga.potencia_ativa = dialog.potNciaAtivaLineEdit.text() 
+                        if dialog.potNciaReativaLineEdit.text() == "":
+                            pass
+                        else:
+                            item.no_de_carga.potencia_reativa = dialog.potNciaReativaLineEdit.text()
 
     def increase_bus(self):
         '''
