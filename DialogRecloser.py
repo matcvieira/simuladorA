@@ -65,7 +65,7 @@ class RecloserDialog(QtGui.QWidget):
         self.formLayout.setWidget(0, QtGui.QFormLayout.LabelRole, self.identificaOLabel)
         self.identificaOLineEdit = QtGui.QLineEdit(self.formLayoutWidget)
         self.identificaOLineEdit.setObjectName("identificaOLineEdit")
-        self.identificaOLineEdit.setPlaceholderText(self.item.chave.nome)
+        self.identificaOLineEdit.setPlaceholderText(self.item.text.toPlainText())
         self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.identificaOLineEdit)
 
 

@@ -345,13 +345,14 @@ class Node(QtGui.QGraphicsRectItem):
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
         # caso o item a ser inserido seja do tipo religador
         elif self.myItemType == self.Religador:
-            rect = QtCore.QRectF(0, 0, 40.0, 40.0)
+            rect = QtCore.QRectF(0, 0, 30, 25)
             # Cria o objeto abstrato chave referente ao religador
 
-            self.chave = Religador("Identificador",0,0,0,0,0)        
+               
 
             # definine e ajusta a posicao do label do item grafico
             self.text = Text('Religador', self, self.scene())
+            self.chave = Religador(self.text.toPlainText(),0,0,0,0,1)     
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
             
         # caso o item a ser inserido seja do tipo barra
@@ -488,9 +489,9 @@ class Node(QtGui.QGraphicsRectItem):
         elif self.myItemType == self.Religador:
             painter.setPen(QtGui.QPen(QtCore.Qt.black, 2))
             if self.chave.normalOpen == 1:
-                painter.setBrush(QtCore.Qt.black)
-            else:
                 painter.setBrush(QtCore.Qt.white)
+            else:
+                painter.setBrush(QtCore.Qt.black)
             painter.drawRoundedRect(self.rect(), 5, 5)
         # caso o item a ser inserido seja do tipo barra
         elif self.myItemType == self.Barra:
@@ -661,7 +662,7 @@ class Node(QtGui.QGraphicsRectItem):
                 if self.collidesWithItem(item):
                     print item
                     if isinstance(item, Edge) and not item.isUnderMouse():
-                        if item.line().length() < 130:
+                        if item.line().length() < 20:
                             return
                         break_mode = 3
                         pos = item.get_fraction(mouse_event.scenePos())
@@ -1021,7 +1022,7 @@ class SceneWidget(QtGui.QGraphicsScene):
                     self.start_item.pos().x() -
                     self.end_item.pos().x(), 2) + math.pow(
                     self.start_item.pos().y() - self.end_item.pos().y(), 2))
-            if dist < 115:
+            if dist < 15:
                 print "Erro: Comprimento da ligação muito pequeno!"
                 return
             if self.edge_broken is not None and self.edge_broken.isPermanent:

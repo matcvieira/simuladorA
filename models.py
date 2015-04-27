@@ -2,9 +2,10 @@
 from xml.etree import ElementTree
 from xml.dom import minidom
 from PySide import QtCore, QtGui
-from graphics import Node, Edge
+from graphics import Node, Edge, Text
 from bs4 import BeautifulSoup
-from elementos import NoConect, Terminal
+from elementos import NoConect, Terminal, Religador
+
 
 
 
@@ -46,6 +47,42 @@ class DiagramToXML(ElementTree.Element):
                 height = ElementTree.Element('height')
                 height.text = str(item.rect().height())
                 CE.append(height)
+
+                if item.myItemType == Node.Religador:
+
+                	padrao = ElementTree.Element('padrao')
+                	padrao.text = str(item.text_config)
+
+                	identificador = ElementTree.Element('identificador')
+                	identificador.text = str(item.text.toPlainText())
+
+                	corrente = ElementTree.Element('corrente')
+                	corrente.text = str(item.chave.ratedCurrent)
+
+                	in_tt = ElementTree.Element('intt')
+                	in_tt.text = str(item.chave.inTransitTime)
+
+                	cap_int = ElementTree.Element('capint')
+                	cap_int.text = str(item.chave.breakingCapacity)
+
+                	seq_rel = ElementTree.Element('seqrel')
+                	seq_rel.text = str(item.chave.recloseSequences)
+
+	                estado = ElementTree.Element('estado')
+	                if item.chave.normalOpen == True:
+	                    state = 1
+	                else:
+	                    state = 0
+	                estado.text = str(state)
+	                CE.append(estado)
+	                CE.append(corrente)
+	                CE.append(in_tt)
+	                CE.append(cap_int)
+	                CE.append(seq_rel)
+	                CE.append(padrao)
+	                CE.append(identificador)
+
+
 
                 self.append(CE)
         for item in lista:
@@ -104,10 +141,20 @@ class XMLToDiagram():
                 elif child.attrib['type'] == '1':
                     item = Node(
                         int(child.attrib['type']), self.scene.myRecloserMenu)
+                    item.text_config = str(child.find('padrao').text)
+                    state = child.find('estado').text
+                    corrente = child.find('corrente').text
+                    in_tt = child.find('intt').text
+                    cap_int = child.find('capint').text
+                    seq_rel = child.find('seqrel').text
+                    identificador = str(child.find('identificador').text)
+                    item.chave = Religador("Identificador",int(corrente),int(in_tt),int(cap_int),int(seq_rel),int(state))
                     item.id = int(child.find('id').text)
                     item.setPos(float(child.find('x').text), float(
                         child.find('y').text))
                     self.scene.addItem(item)
+                    item.text.setPlainText(identificador)
+                    #item.text = Text(identificador, item, item.scene())
                 elif child.attrib['type'] == '2':
                     item = Node(int(
                         child.attrib['type']), self.scene.myBusMenu)
@@ -128,7 +175,7 @@ class XMLToDiagram():
                     self.scene.addItem(item)
 
                 elif child.attrib['type'] == '4':
-                    item = Node(int(child.attrib['type']), None)
+                    item = Node(int(child.attrib['type']), self.scene.mySubstationMenu)
                     item.setPos(
                         float(child.find('x').text), float(
                             child.find('y').text))
