@@ -172,12 +172,14 @@ class Edge(QtGui.QGraphicsLineItem):
                     self.w1.edge_position(
                         self)), self.mapFromItem(
                     self.w2, self.w2.rect().center()))
-                # alinha o item religador conectado ao item Barra com alinha
+                # alinha o item religador conectado ao item Barra com a linha
                 # que conecta esses dois items
                 self.w2.setY(self.mapFromItem(
                     self.w1, self.w1.rect().center().x(),
                     self.w1.edge_position(
-                        self)).y() - 20.0)
+                        self)).y() - 10)
+                self.w2.setPos(self.w2.adjust_in_grid(self.w2.scenePos()))
+                line.setLine(line.x1(),self.w2.scenePos().y()+10,line.x2(),line.y2())
                 if self.w2.myItemType == Node.NoConectivo:
                     self.w2.setY(self.mapFromItem(
                     self.w1, self.w1.rect().center().x(),
@@ -209,7 +211,7 @@ class Edge(QtGui.QGraphicsLineItem):
                 self.w1.setY(self.mapFromItem(
                     self.w2, self.w2.rect().center().x(),
                     self.w2.edge_position(
-                        self)).y() - 20.0)
+                        self)).y() - 12.5)
                 self.w1.fix_item()
             # se não os items são apenas conectados
             else:
@@ -345,7 +347,7 @@ class Node(QtGui.QGraphicsRectItem):
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
         # caso o item a ser inserido seja do tipo religador
         elif self.myItemType == self.Religador:
-            rect = QtCore.QRectF(0, 0, 30, 25)
+            rect = QtCore.QRectF(0, 0, 20, 20)
             # Cria o objeto abstrato chave referente ao religador
 
                
@@ -374,7 +376,7 @@ class Node(QtGui.QGraphicsRectItem):
             rect = QtCore.QRectF(0, 0, 7, 7)
 
         elif self.myItemType == self.NoDeCarga:
-            rect = QtCore.QRectF(0, 0, 12, 12)
+            rect = QtCore.QRectF(0, 0, 8, 8)
 
             self.no_de_carga = EnergyConsumer("Identificador", 0, 0)
 
@@ -552,70 +554,12 @@ class Node(QtGui.QGraphicsRectItem):
         return
 
     def mouseMoveEvent(self, mouse_event):
-        if self.myItemType == Node.Religador:
-            self.pressed = False
-            if self.lock_h is False:
-                self.scene().addItem(self.line_final_x)
-            if self.lock_v is False:    
-                self.scene().addItem(self.line_final_y)
-
-            pos_x_init = self.pos().x() + 20
-            pos_y_init = self.pos().y() + 20
-            for item in self.scene().items():
-                if isinstance(item, Node):
-                    if item.myItemType == Node.Religador and item != self and self.collider_counter < 10:
-                        if item.collidesWithItem(self.line_final_x):
-                            self.setY(item.pos().y())
-                            self.line_ref_x = QtCore.QLineF(QtCore.QPointF(pos_x_init, pos_y_init), QtCore.QPointF(item.pos().x(), pos_y_init))
-                            self.line_final_x.setLine(self.line_ref_x)
-                            self.collider_counter += 1
-                            if self.line_final_y.scene() != None:
-                                self.scene().removeItem(self.line_final_y)
-                            self.lock_h = True
-                            self.lock_v = True
-                            return
-                        elif item.collidesWithItem(self.line_final_y):
-                            self.setX(item.pos().x())
-                            self.line_ref_y = QtCore.QLineF(QtCore.QPointF(pos_x_init, pos_y_init), QtCore.QPointF(pos_x_init, item.pos().y()))
-                            self.line_final_y.setLine(self.line_ref_y)
-                            if self.line_final_x.scene() != None:
-                                self.scene().removeItem(self.line_final_x)
-                            self.collider_counter += 1
-                            self.lock_v = True
-                            self.lock_h = True
-                            return
-            self.collider_counter += 1
-            if self.collider_counter > 20:
-                self.collider_counter = 0
-            self.cena = self.scene()
-            self.lock_h = False
-            self.lock_v = False
-            deltax = math.fabs(mouse_event.scenePos().x() - self.mouse_event_ref_x)
-            deltay = math.fabs(mouse_event.scenePos().y() - self.mouse_event_ref_y)
-
-            # self.mouse_event_ref = mouse_event.scenePos()
-            if deltax < 20:
-                pass
-            else:
-                self.setX(mouse_event.scenePos().x() - 20)
-                self.mouse_event_ref_x = mouse_event.scenePos().x()
-                pos_x_init = self.pos().x() + 20
-            if deltay < 20:
-                pass
-            else:
-                self.setY(mouse_event.scenePos().y() - 20)
-                self.mouse_event_ref_y = mouse_event.scenePos().y()
-                pox_y_init = self.pos().y() + 20
-            self.line_ref_x = QtCore.QLineF(QtCore.QPointF(pos_x_init -150, pos_y_init), QtCore.QPointF(pos_x_init + 190, pos_y_init)) 
-            self.line_final_x.setLine(self.line_ref_x)
-            self.line_ref_y = QtCore.QLineF(QtCore.QPointF(pos_x_init, pos_y_init -150), QtCore.QPointF(pos_x_init, pos_y_init + 190)) 
-            self.line_final_y.setLine(self.line_ref_y)
-            if self.line_final_x.scene() != None:
-                self.scene().removeItem(self.line_final_x)
-            if self.line_final_y.scene() != None:
-                self.scene().removeItem(self.line_final_y)
-            return
         super(Node,self).mouseMoveEvent(mouse_event)
+        
+
+        self.setPos(self.adjust_in_grid(self.scenePos()))
+        
+        
 
 
     def mouseReleaseEvent(self, mouse_event):
@@ -655,6 +599,9 @@ class Node(QtGui.QGraphicsRectItem):
 
 
         if self.myItemType == Node.NoDeCarga:
+            if len(self.edges) != 0:
+                scene.removeItem(ell)
+                return
             scene.removeItem(ell)
             if self.scene().myMode == 1:
                 return
@@ -676,6 +623,77 @@ class Node(QtGui.QGraphicsRectItem):
         super(Node, self).mouseDoubleClickEvent(event)
         if self.myItemType == Node.Religador:
             self.chave.normalOpen = not self.chave.normalOpen
+
+    def adjust_in_grid(self,pos):
+        item_x = pos.x()
+        item_y = pos.y()
+        if item_x ==0 or item_y ==0:
+            return
+        centena_x = int(item_x/100)*100
+        centena_y = int(item_y/100)*100
+        residual_x = item_x - centena_x
+        residual_y = item_y - centena_y
+        
+
+        if residual_x > 10:
+            if residual_x > 20:
+                if residual_x > 30:
+                    new_pos_x = centena_x + 40
+                else:
+                    new_pos_x = centena_x + 20
+            else:
+                new_pos_x = centena_x + 20
+        else:
+            new_pos_x = centena_x
+
+        if residual_x > 40:
+            if residual_x > 50:
+                new_pos_x = centena_x + 60
+            else:
+                new_pos_x = centena_x + 40
+        if residual_x > 60:
+            if residual_x > 70:
+                new_pos_x = centena_x + 80
+            else:
+                new_pos_x = centena_x + 60
+        if residual_x > 80:
+            if residual_x > 90:
+                new_pos_x = centena_x + 100
+            else:
+                new_pos_x = centena_x + 80
+
+        if residual_y > 10:
+            if residual_y > 20:
+                if residual_y > 30:
+                    new_pos_y = centena_y + 40
+                else:
+                    new_pos_y = centena_y + 20
+            else:
+                new_pos_y = centena_y + 20
+        else:
+            new_pos_y = centena_y
+
+        if residual_y > 40:
+            if residual_y > 50:
+                new_pos_y = centena_y + 60
+            else:
+                new_pos_y = centena_y + 40
+        if residual_y > 60:
+            if residual_y > 70:
+                new_pos_y = centena_y + 80
+            else:
+                new_pos_y = centena_y + 60
+        if residual_y > 80:
+            if residual_y > 90:
+                new_pos_y = centena_y + 100
+            else:
+                new_pos_y = centena_y + 80
+
+        if self.myItemType == Node.NoDeCarga:
+            new_pos_x += 6
+            new_pos_y += 6
+
+        return QtCore.QPointF(new_pos_x,new_pos_y)
 
     def contextMenuEvent(self, event):
             self.scene().clearSelection()
@@ -735,6 +753,7 @@ class SceneWidget(QtGui.QGraphicsScene):
             mousePress e detectado no diagrama grafico
         '''
         super(SceneWidget, self).mousePressEvent(mouse_event)
+        print mouse_event.scenePos()
         self.pressPos = mouse_event.scenePos()
         self.break_mode = 2
         self.edge_broken = None
@@ -791,8 +810,12 @@ class SceneWidget(QtGui.QGraphicsScene):
             elif self.myItemType == Node.NoDeCarga:
                 item = Node(self.myItemType, self.mySubstationMenu)
 
+            
+            
+
+            item.setPos(item.adjust_in_grid(mouse_event.scenePos()))
             self.addItem(item)
-            item.setPos(mouse_event.scenePos())
+            #item.setPos(mouse_event.scenePos())
             comando = add_remove_command("Add", self, item)
             self.undoStack.push(comando)
             self.itemInserted.emit(self.myItemType)
@@ -1384,20 +1407,20 @@ class SceneWidget(QtGui.QGraphicsScene):
         
             if isinstance(item, Node):
                 if item.myItemType == Node.NoDeCarga:
-    	            dialog = EnergyConsumerDialog(item)
-    	            if dialog.dialog.result() == 1:
-    	                    if dialog.identificaOLineEdit.text() == "":
-    	                        pass
-    	                    else:
-    	                        item.no_de_carga.nome = dialog.identificaOLineEdit.text()
-    	                    if dialog.potNciaAtivaLineEdit.text() == "":
-    	                        pass
-    	                    else:
-    	                        item.no_de_carga.potencia_ativa = dialog.potNciaAtivaLineEdit.text() 
-    	                    if dialog.potNciaReativaLineEdit.text() == "":
-    	                        pass
-    	                    else:
-    	                        item.no_de_carga.potencia_reativa = dialog.potNciaReativaLineEdit.text()
+                    dialog = EnergyConsumerDialog(item)
+                    if dialog.dialog.result() == 1:
+                            if dialog.identificaOLineEdit.text() == "":
+                                pass
+                            else:
+                                item.no_de_carga.nome = dialog.identificaOLineEdit.text()
+                            if dialog.potNciaAtivaLineEdit.text() == "":
+                                pass
+                            else:
+                                item.no_de_carga.potencia_ativa = dialog.potNciaAtivaLineEdit.text() 
+                            if dialog.potNciaReativaLineEdit.text() == "":
+                                pass
+                            else:
+                                item.no_de_carga.potencia_reativa = dialog.potNciaReativaLineEdit.text()
 
     def increase_bus(self):
         '''
