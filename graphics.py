@@ -634,9 +634,10 @@ class Node(QtGui.QGraphicsRectItem):
         return
 
     def mouseDoubleClickEvent(self, event):
+        self.scene().clearSelection()
+        self.setSelected(True)
         super(Node, self).mouseDoubleClickEvent(event)
-        if self.myItemType == Node.Religador:
-            self.chave.normalOpen = not self.chave.normalOpen
+        self.scene().launch_dialog()
 
     def adjust_in_grid(self,pos):
         self.adjusted = True
@@ -1165,6 +1166,8 @@ class SceneWidget(QtGui.QGraphicsScene):
                 self.undoStack.undo()
             if key == QtCore.Qt.Key_Y:
                 self.undoStack.redo()
+        if key == QtCore.Qt.Key_Space:
+            self.change_state()
         if key == QtCore.Qt.Key_Up:
             for item in self.selectedItems():
                 item.moveBy(0, -5)
@@ -1247,14 +1250,23 @@ class SceneWidget(QtGui.QGraphicsScene):
         '''
         self.myMode = mode
 
+    def change_state(self):
+        for item in self.selectedItems():
+            print item
+            if item.myItemType == Node.Religador:
+                item.chave.normalOpen = not item.chave.normalOpen
+                item.setSelected(False)
+                item.setSelected(True)
+                print item.chave.normalOpen
+
     def create_actions(self):
         '''
             Este metodo cria as ações que serão utilizadas nos menus dos itens
             gráficos.
         '''
         self.propertysAction = QtGui.QAction(
-            'Propriedades', self, shortcut='Enter',
-            triggered=self.launch_dialog)
+            'Abrir/Fechar', self, shortcut='Enter',
+            triggered=self.change_state)
         self.deleteAction = QtGui.QAction(
             'Excluir Item', self, shortcut='Delete',
             triggered=self.delete_item)
