@@ -12,6 +12,7 @@ from DialogSubstation import SubstationDialog
 from DialogEnergyConsumer import EnergyConsumerDialog
 from aviso_conexao import AvisoConexaoDialog
 from avisoReligador import AvisoReligador
+from avisoNome import AvisoNome
 
 lista_no_conectivo = []
 
@@ -829,12 +830,34 @@ class SceneWidget(QtGui.QGraphicsScene):
 
             item.setPos(item.adjust_in_grid(mouse_event.scenePos()))
             self.addItem(item)
-            item.setSelected(True)
-            self.launch_dialog()
-            item.setSelected(False)
-            if item.chave.nome == '':
-                self.removeItem(item)
-            
+
+            if self.myItemType == Node.Religador:
+                item.setSelected(True)
+                result = self.launch_dialog()
+                item.setSelected(False)
+                if result == 0:
+                    self.removeItem(item)
+
+            elif self.myItemType == Node.Barra:
+                item.setSelected(True)
+                result = self.launch_dialog()
+                item.setSelected(False)
+                if result == 0:
+                    self.removeItem(item)
+            elif self.myItemType == Node.Subestacao:
+                item.setSelected(True)
+                result = self.launch_dialog()
+                item.setSelected(False)
+                if result == 0:
+                    self.removeItem(item)
+                
+            elif self.myItemType == Node.NoDeCarga:
+                item.setSelected(True)
+                result = self.launch_dialog()
+                item.setSelected(False)
+                if result == 0:
+                    self.removeItem(item)
+
             #item.setPos(mouse_event.scenePos())
             comando = add_remove_command("Add", self, item)
             self.undoStack.push(comando)
@@ -1368,11 +1391,11 @@ class SceneWidget(QtGui.QGraphicsScene):
                     dialog = RecloserDialog(item)
                     if dialog.dialog.result() == 1:
                         item.text_config = unicode(dialog.testeLineEdit.currentText())
-                        item.text.setPlainText(dialog.identificaOLineEdit.text())
                         if dialog.identificaOLineEdit.text() == "":
                             pass
                         else:
                             item.chave.nome = dialog.identificaOLineEdit.text()
+                            item.text.setPlainText(dialog.identificaOLineEdit.text())
                         if dialog.correnteNominalLineEdit.text() == "":
                             pass
                         else:
@@ -1385,26 +1408,31 @@ class SceneWidget(QtGui.QGraphicsScene):
                             pass
                         else:
                             item.chave.recloseSequences = dialog.nDeSequNciasDeReligamentoLineEdit.text()
+                    else:
+                        return dialog.dialog.result()
                 
             if isinstance(item, Node):
                 if item.myItemType == Node.Barra:
                     dialog = BarraDialog(item)
                     if dialog.dialog.result() == 1:
-                        item.text.setPlainText(dialog.identificaOLineEdit.text())
+                        
                         if dialog.nomeLineEdit.text() == "":
                             pass
                         else:
+                            item.text.setPlainText(dialog.nomeLineEdit.text())
                             item.barra.nome = dialog.nomeLineEdit.text()
                         if dialog.fasesLineEdit.text() == "":
                             pass
                         else:
                             item.barra.phases = dialog.fasesLineEdit.text()
+                    else:
+                        return dialog.dialog.result()
 
             if isinstance(item, Node):
                 if item.myItemType == Node.Subestacao:
                     dialog = SubstationDialog(item)
                     if dialog.dialog.result() == 1:
-                        item.text.setPlainText(dialog.identificaOLineEdit.text())
+                        item.text.setPlainText(dialog.nomeLineEdit.text())
                         if dialog.nomeLineEdit.text() == "":
                             pass
                         else:
@@ -1413,6 +1441,8 @@ class SceneWidget(QtGui.QGraphicsScene):
                             pass
                         else:
                             item.substation.tensao_primario = dialog.tpLineEdit.text()
+                    else:
+                        return dialog.dialog.result()
 
             if isinstance(item, Edge):
                 dialog = ConductorDialog(item)
@@ -1441,6 +1471,8 @@ class SceneWidget(QtGui.QGraphicsScene):
                             pass
                         else:
                             item.linha.ampacidade = dialog.ampacidadeLineEdit.text()
+                else:
+                        return dialog.dialog.result()
         
             if isinstance(item, Node):
                 if item.myItemType == Node.NoDeCarga:
@@ -1459,6 +1491,8 @@ class SceneWidget(QtGui.QGraphicsScene):
                             pass
                         else:
                             item.no_de_carga.potencia_reativa = dialog.potNciaReativaLineEdit.text()
+                    else:
+                        return dialog.dialog.result()
 
     def increase_bus(self):
         '''

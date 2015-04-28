@@ -45,6 +45,7 @@ class EnergyConsumerDialog(QtGui.QWidget):
         self.identificaOLineEdit.setObjectName("identificaOLineEdit")
         self.identificaOLineEdit.setPlaceholderText(str(self.item.no_de_carga.nome))
         self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.identificaOLineEdit)
+        self.identificaOLineEdit.textChanged.connect(self.en_dis_button)
 
         #definição da propriedade Potencia Ativa
         self.potNciaAtivaLabel = QtGui.QLabel(self.formLayoutWidget)
@@ -68,6 +69,22 @@ class EnergyConsumerDialog(QtGui.QWidget):
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), Dialog.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), Dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+        if self.identificaOLineEdit.text() == "":
+            print self.buttonBox.buttons()
+            self.buttonBox.buttons()[0].setEnabled(False)
+        else:
+            self.buttonBox.buttons()[0].setEnabled(True)
+        if self.identificaOLineEdit.placeholderText() != "":
+            self.buttonBox.buttons()[0].setEnabled(True)
+
+    def en_dis_button(self):
+
+        if self.identificaOLineEdit.text() == "":
+            print self.buttonBox.buttons()
+            self.buttonBox.buttons()[0].setEnabled(False)
+        else:
+            self.buttonBox.buttons()[0].setEnabled(True)
 
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "No de Carga - Propriedades", None, QtGui.QApplication.UnicodeUTF8))

@@ -67,6 +67,7 @@ class RecloserDialog(QtGui.QWidget):
         self.identificaOLineEdit.setObjectName("identificaOLineEdit")
         self.identificaOLineEdit.setPlaceholderText(self.item.text.toPlainText())
         self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.identificaOLineEdit)
+        self.identificaOLineEdit.textChanged.connect(self.en_dis_button)
 
 
         #definição da propriedade CORRENTE NOMINAL
@@ -107,12 +108,27 @@ class RecloserDialog(QtGui.QWidget):
         # i = 0
         # for value in self.scene.dict_prop[self.testeLineEdit.currentText()].values():
         #     if value ==
+        if self.identificaOLineEdit.text() == "":
+            print self.buttonBox.buttons()
+            self.buttonBox.buttons()[0].setEnabled(False)
+        else:
+            self.buttonBox.buttons()[0].setEnabled(True)
+        if self.identificaOLineEdit.placeholderText() != "":
+            self.buttonBox.buttons()[0].setEnabled(True)
+
 
         self.retranslateUi(Dialog)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), Dialog.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), Dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
+    def en_dis_button(self):
+
+        if self.identificaOLineEdit.text() == "":
+            print self.buttonBox.buttons()
+            self.buttonBox.buttons()[0].setEnabled(False)
+        else:
+            self.buttonBox.buttons()[0].setEnabled(True)
 
     def update_values(self, index):
 
