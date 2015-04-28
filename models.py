@@ -48,6 +48,9 @@ class DiagramToXML(ElementTree.Element):
                 height.text = str(item.rect().height())
                 CE.append(height)
 
+                # Salva as informações referente ao item gráfico religador
+                # e os parâmetros da sua chave associada 
+
                 if item.myItemType == Node.Religador:
 
                     padrao = ElementTree.Element('padrao')
@@ -111,6 +114,10 @@ class DiagramToXML(ElementTree.Element):
                 w2 = ElementTree.Element('w2')
                 w2.text = str(item.w2.id)
 
+                comprimento = ElementTree.Element('comprimento')
+                comprimento.text = str(item.linha.comprimento)
+
+                edge.append(comprimento)
                 edge.append(w1)
                 edge.append(w2)
                 self.append(edge)
@@ -220,6 +227,8 @@ class XMLToDiagram():
                     elif isinstance(item, Node) and item.id == int(child.find('w2').text):
                         w2 = item
                 edge = Edge(w1, w2, self.scene.myLineMenu)
+                comprimento = str(child.find('comprimento').text)
+                edge.linha.comprimento = comprimento
                 self.scene.addItem(edge)
                 edge.update_position()
                 print "opa"

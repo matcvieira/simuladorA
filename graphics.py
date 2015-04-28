@@ -1187,17 +1187,27 @@ class SceneWidget(QtGui.QGraphicsScene):
         super(SceneWidget, self).mouseReleaseEvent(mouse_event)
 
     def mouseDoubleClickEvent(self, mouse_event):
-        #super(SceneWidget, self).mouseDoubleClickEvent(mouse_event)
-        ell = QtGui.QGraphicsEllipseItem()
-        ell.setRect(QtCore.QRectF(mouse_event.scenePos() - QtCore.QPointF(10,10), QtCore.QSizeF(15,15)))
-        self.addItem(ell)
-        for item in self.items():
-            if item.collidesWithItem(ell) and not isinstance(item, QtGui.QGraphicsEllipseItem):
-                self.removeItem(ell)
+        
+        for item in self.selectedItems():
+            if isinstance(item, Node):
                 item.setSelected(True)
                 self.launch_dialog()
                 item.setSelected(False)
-
+                return
+        ell = QtGui.QGraphicsEllipseItem()
+        ell.setRect(QtCore.QRectF(mouse_event.scenePos() - QtCore.QPointF(10,10), QtCore.QSizeF(30,30)))
+        self.addItem(ell)
+        for item in self.items():
+            if item.collidesWithItem(ell) and isinstance(item, Edge):
+                if ell.scene() != None:
+                    self.removeItem(ell)
+                item.setSelected(True)
+                self.launch_dialog()
+                item.setSelected(False)
+                return
+            else:
+                if ell.scene() != None:
+                    self.removeItem(ell)
 
         #     Problema quando tenta-se modificar o texto dos componentes
     def keyPressEvent(self, event):
