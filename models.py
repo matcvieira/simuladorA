@@ -163,8 +163,8 @@ class XMLToDiagram():
                     in_tt = child.find('intt').text
                     cap_int = child.find('capint').text
                     seq_rel = child.find('seqrel').text
-                    identificador = str(child.find('identificador').text)
-                    item.chave = Religador("Identificador",int(corrente),int(in_tt),int(cap_int),int(seq_rel),int(state))
+                    identificador = child.find('identificador').text
+                    item.chave = Religador(identificador,int(corrente),int(in_tt),int(cap_int),int(seq_rel),int(state))
                     item.id = int(child.find('id').text)
                     item.setPos(float(child.find('x').text), float(
                         child.find('y').text))
@@ -354,16 +354,16 @@ class CimXML():
                     
                     tag_id = self.cim_xml.new_tag("mRID")
                     tag_id.append(str(item.id))
-                    self.cim_xml.find("EnergyConsumer").append(tag_id)
+                    tag_energyConsumer.append(tag_id)
 
                     tag_pFixed = self.cim_xml.new_tag("pFixed")
                     tag_pFixed.append(str(item.no_de_carga.potencia_ativa))
-                    self.cim_xml.find("EnergyConsumer").append(tag_pFixed)
+                    tag_energyConsumer.append(tag_pFixed)
 
 
                     tag_qFixed = self.cim_xml.new_tag("qFixed")
                     tag_qFixed.append(str(item.no_de_carga.potencia_reativa))
-                    self.cim_xml.find("EnergyConsumer").append(tag_qFixed)                   
+                    tag_energyConsumer.append(tag_qFixed)                   
 
 
                     tag_terminal1= self.cim_xml.new_tag("terminal")

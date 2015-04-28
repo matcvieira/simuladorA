@@ -70,13 +70,23 @@ class EnergyConsumerDialog(QtGui.QWidget):
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), Dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
-        if self.identificaOLineEdit.text() == "":
-            print self.buttonBox.buttons()
-            self.buttonBox.buttons()[0].setEnabled(False)
-        else:
-            self.buttonBox.buttons()[0].setEnabled(True)
+        # if self.identificaOLineEdit.text() == "":
+        #     print self.buttonBox.buttons()
+        #     self.buttonBox.buttons()[0].setEnabled(False)
+        # else:
+        #     self.buttonBox.buttons()[0].setEnabled(True)
+        self.en_dis_button()
         if self.identificaOLineEdit.placeholderText() != "":
-            self.buttonBox.buttons()[0].setEnabled(True)
+            if self.potNciaAtivaLineEdit.placeholderText() != "0":
+                if self.potNciaReativaLineEdit.placeholderText() != "0":
+                    self.buttonBox.buttons()[0].setFocus()
+                else:
+                    self.potNciaReativaLineEdit.setFocus()
+            else:
+                self.potNciaAtivaLineEdit.setFocus()
+        else:
+            self.identificaOLineEdit.setFocus()
+
 
     def en_dis_button(self):
 
@@ -84,6 +94,8 @@ class EnergyConsumerDialog(QtGui.QWidget):
             print self.buttonBox.buttons()
             self.buttonBox.buttons()[0].setEnabled(False)
         else:
+            self.buttonBox.buttons()[0].setEnabled(True)
+        if self.identificaOLineEdit.placeholderText() != "":
             self.buttonBox.buttons()[0].setEnabled(True)
 
     def retranslateUi(self, Dialog):

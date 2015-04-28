@@ -45,6 +45,7 @@ class SubstationDialog(QtGui.QWidget):
         self.nomeLineEdit.setObjectName("nomeLineEdit")
         self.nomeLineEdit.setPlaceholderText(str(self.item.substation.nome))
         self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.nomeLineEdit)
+        self.nomeLineEdit.textChanged.connect(self.en_dis_button)
 
         #definição da propriedade TENSÃO PRIMÁRIO
         self.tpLabel = QtGui.QLabel(self.formLayoutWidget)
@@ -86,6 +87,22 @@ class SubstationDialog(QtGui.QWidget):
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), Dialog.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), Dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+        if self.nomeLineEdit.text() == "":
+            print self.buttonBox.buttons()
+            self.buttonBox.buttons()[0].setEnabled(False)
+        else:
+            self.buttonBox.buttons()[0].setEnabled(True)
+        if self.nomeLineEdit.placeholderText() != "":
+            self.buttonBox.buttons()[0].setEnabled(True)
+
+    def en_dis_button(self):
+
+        if self.nomeLineEdit.text() == "":
+            print self.buttonBox.buttons()
+            self.buttonBox.buttons()[0].setEnabled(False)
+        else:
+            self.buttonBox.buttons()[0].setEnabled(True)
 
     def retranslateUi(self, Dialog):
         #Tradução dos nomes dados aos objetos para os nomes gráficos do programa

@@ -271,6 +271,7 @@ class Edge(QtGui.QGraphicsLineItem):
         super(Edge, self).mousePressEvent(mouse_event)
         return
 
+
     def contextMenuEvent(self, event):
         self.scene().clearSelection()
         self.setSelected(True)
@@ -1185,6 +1186,19 @@ class SceneWidget(QtGui.QGraphicsScene):
         self.ghost = None
         super(SceneWidget, self).mouseReleaseEvent(mouse_event)
 
+    def mouseDoubleClickEvent(self, mouse_event):
+        #super(SceneWidget, self).mouseDoubleClickEvent(mouse_event)
+        ell = QtGui.QGraphicsEllipseItem()
+        ell.setRect(QtCore.QRectF(mouse_event.scenePos() - QtCore.QPointF(10,10), QtCore.QSizeF(15,15)))
+        self.addItem(ell)
+        for item in self.items():
+            if item.collidesWithItem(ell) and not isinstance(item, QtGui.QGraphicsEllipseItem):
+                self.removeItem(ell)
+                item.setSelected(True)
+                self.launch_dialog()
+                item.setSelected(False)
+
+
         #     Problema quando tenta-se modificar o texto dos componentes
     def keyPressEvent(self, event):
         key = event.key()
@@ -1432,10 +1446,11 @@ class SceneWidget(QtGui.QGraphicsScene):
                 if item.myItemType == Node.Subestacao:
                     dialog = SubstationDialog(item)
                     if dialog.dialog.result() == 1:
-                        item.text.setPlainText(dialog.nomeLineEdit.text())
+                        
                         if dialog.nomeLineEdit.text() == "":
                             pass
                         else:
+                            item.text.setPlainText(dialog.nomeLineEdit.text())
                             item.substation.nome = dialog.nomeLineEdit.text()
                         if dialog.tpLineEdit.text() == "":
                             pass
@@ -1478,10 +1493,11 @@ class SceneWidget(QtGui.QGraphicsScene):
                 if item.myItemType == Node.NoDeCarga:
                     dialog = EnergyConsumerDialog(item)
                     if dialog.dialog.result() == 1:
-                        item.text.setPlainText(dialog.identificaOLineEdit.text())
+                        
                         if dialog.identificaOLineEdit.text() == "":
                             pass
                         else:
+                            item.text.setPlainText(dialog.identificaOLineEdit.text())
                             item.no_de_carga.nome = dialog.identificaOLineEdit.text()
                         if dialog.potNciaAtivaLineEdit.text() == "":
                             pass
