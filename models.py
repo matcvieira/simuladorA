@@ -307,7 +307,7 @@ class CimXML():
 
                     tag_id = self.cim_xml.new_tag("mRID")
                     tag_id.append(str(item.id))
-                    self.cim_xml.find("busBarSection").append(tag_id)
+                    tag_barra.append(tag_id)
 
                     tag_phases = self.cim_xml.new_tag("phases")
                     tag_phases.append(str(item.barra.phases))
@@ -375,23 +375,12 @@ class CimXML():
                     tag_energyConsumer.append(tag_qFixed)                   
 
 
-                    tag_terminal1= self.cim_xml.new_tag("terminal")
-                    tag_seqNumber = self.cim_xml.new_tag("SequenceNumber")
-                    tag_seqNumber.append("1")
-                    tag_terminal1.append(tag_seqNumber)
-                    tag_mRID = self.cim_xml.new_tag("mRID")
-                    tag_mRID.append(str(item.terminal1.mRID))
-                    tag_terminal1.append(tag_mRID)
-                    tag_energyConsumer.append(tag_terminal1)
-
-                    tag_terminal2= self.cim_xml.new_tag("terminal")
-                    tag_seqNumber = self.cim_xml.new_tag("SequenceNumber")
-                    tag_seqNumber.append("2")
-                    tag_terminal2.append(tag_seqNumber)
-                    tag_mRID = self.cim_xml.new_tag("mRID")
-                    tag_mRID.append(str(item.terminal2.mRID))
-                    tag_terminal2.append(tag_mRID)
-                    tag_energyConsumer.append(tag_terminal2)
+                    for Terminal in (item.terminals):
+                        tag_terminal = self.cim_xml.new_tag("terminal")
+                        tag_mRID = self.cim_xml.new_tag('mRID')
+                        tag_mRID.append(str(Terminal.mRID)) 
+                        tag_terminal.append(tag_mRID)
+                        tag_energyConsumer.append(tag_terminal)
 
         for item in scene.items():
             if isinstance(item, Edge):
@@ -401,31 +390,31 @@ class CimXML():
                     
                     tag_id = self.cim_xml.new_tag("mRID")
                     tag_id.append(str(item.linha.id))
-                    self.cim_xml.find("Conductor").append(tag_id)
+                    tag_conductor.append(tag_id)
 
                     tag_length = self.cim_xml.new_tag("length")
                     tag_length.append(str(item.linha.comprimento))
-                    self.cim_xml.find("Conductor").append(tag_length)
+                    tag_conductor.append(tag_length)
 
                     tag_r = self.cim_xml.new_tag("r")
                     tag_r.append(str(item.linha.resistencia))
-                    self.cim_xml.find("Conductor").append(tag_r)
+                    tag_conductor.append(tag_r)
 
                     tag_r0 = self.cim_xml.new_tag("r0")
                     tag_r0.append(str(item.linha.resistencia_zero))
-                    self.cim_xml.find("Conductor").append(tag_r0)
+                    tag_conductor.append(tag_r0)
 
                     tag_x = self.cim_xml.new_tag("x")
                     tag_x.append(str(item.linha.reatancia))
-                    self.cim_xml.find("Conductor").append(tag_x) 
+                    tag_conductor.append(tag_x) 
 
                     tag_x0 = self.cim_xml.new_tag("x0")
                     tag_x0.append(str(item.linha.reatancia_zero))
-                    self.cim_xml.find("Conductor").append(tag_x0)
+                    tag_conductor.append(tag_x0)
 
                     tag_currentLimit = self.cim_xml.new_tag("currentLimit")
                     tag_currentLimit.append(str(item.linha.ampacidade))
-                    self.cim_xml.find("Conductor").append(tag_currentLimit)                   
+                    tag_conductor.append(tag_currentLimit)                   
 
                     tag_terminal1= self.cim_xml.new_tag("terminal")
                     tag_seqNumber = self.cim_xml.new_tag("SequenceNumber")
@@ -479,13 +468,13 @@ class CimXML():
 
         for item in self.scene.items():
             if isinstance(item, Node):
-                if item.myItemType != Node.NoConectivo and item.myItemType != Node.Barra:
+                if item.myItemType != Node.NoConectivo and item.myItemType != Node.Barra and item.myItemType != Node.NoDeCarga:
                     item.terminal1 = Terminal(item)
                     item.terminal2 = Terminal(item)
                     self.lista_terminais.append(item.terminal1)
                     self.lista_terminais.append(item.terminal2)
 
-                if item.myItemType == Node.Barra:
+                if item.myItemType == Node.Barra or item.myItemType == Node.NoDeCarga:
                     for i in range(len(item.edges)):
                         terminal = Terminal(item)
                         item.terminals.append(terminal)
@@ -496,6 +485,7 @@ class CimXML():
                 self.lista_terminais.append(item.terminal1)
                 self.lista_terminais.append(item.terminal1)
 
+
         for edge in self.scene.items():
             if isinstance(edge, Edge):
                 no_conectivo_1 = NoConect([])
@@ -503,7 +493,7 @@ class CimXML():
                 print "start"
 
                 # Ligação do Nó Conectivo relativo à ligação do terminal de w1 com o terminal 1 da linha - CONVENÇÃO!
-                if edge.w1.myItemType != Node.NoConectivo and edge.w1.myItemType != Node.Barra and edge.w2.myItemType != Node.Barra:
+                if edge.w1.myItemType != Node.NoConectivo and edge.w1.myItemType != Node.Barra and edge.w2.myItemType != Node.Barra and edge.w1.myItemType != Node.NoDeCarga:
 
                     print "w1 is not NoC"
                     if edge.w1.terminal1.connected:
@@ -564,9 +554,33 @@ class CimXML():
                             self.lista_no_conectivo.append(no_conectivo)
                             break
 
+                elif edge.w1.myItemType == Node.NoDeCarga:
+                    for terminal in edge.w1.terminals:
+                        no_conectivo = NoConect([])
+                        if terminal.connected:
+                            continue
+                        else:
+                            if edge.terminal1.connected:
+                                if edge.terminal2.connected:
+                                    pass
+                                else:
+                                    no_conectivo.terminal_list.append(terminal)
+                                    terminal.connect()
+                                    no_conectivo.terminal_list.append(edge.terminal2)
+                                    edge.terminal2.connect()
+                            else:
+                                no_conectivo.terminal_list.append(terminal)
+                                terminal.connect()
+                                no_conectivo.terminal_list.append(edge.terminal1)
+                                edge.terminal1.connect()
+
+
+
+                            self.lista_no_conectivo.append(no_conectivo)
+                            break
 
                 # Ligação do Nó Conectivo relativo à ligação do terminal de w2 com o terminal 2 da linha - CONVENÇÃO!
-                if edge.w2.myItemType != Node.NoConectivo and edge.w2.myItemType != Node.Barra and edge.w1.myItemType != Node.Barra:
+                if edge.w2.myItemType != Node.NoConectivo and edge.w2.myItemType != Node.Barra and edge.w1.myItemType != Node.Barra and edge.w2.myItemType != Node.NoDeCarga:
                     print "w2 is not NoC"
                     if edge.w2.terminal1.connected:
                         if edge.w2.terminal2.connected:
@@ -624,6 +638,28 @@ class CimXML():
                             self.lista_no_conectivo.append(no_conectivo)
                             break
 
+                elif edge.w2.myItemType == Node.NoDeCarga:
+                    for terminal in edge.w2.terminals:
+                        no_conectivo = NoConect([])
+                        if terminal.connected:
+                            continue
+                        else:
+                            if edge.terminal1.connected:
+                                if edge.terminal2.connected:
+                                    pass
+                                else:
+                                    no_conectivo.terminal_list.append(terminal)
+                                    terminal.connect()
+                                    no_conectivo.terminal_list.append(edge.terminal2)
+                                    edge.terminal2.connect()
+                            else:
+                                no_conectivo.terminal_list.append(terminal)
+                                terminal.connect()
+                                no_conectivo.terminal_list.append(edge.terminal1)
+                                edge.terminal1.connect()
+                            self.lista_no_conectivo.append(no_conectivo)
+                            break
+
                 print "end"
 
 
@@ -634,7 +670,10 @@ class CimXML():
         for no in self.lista_no_conectivo:
             print "===============================NÓ CONECTIVO - " + str(id(no)) + "============\n\n"
             for no2 in no.terminal_list:
-                print "terminal: " + str(id(no2)) + "\n" + "objeto: " + str(id(no2.parent)) + "\n" + "Posição: " + str(no2.parent.scenePos()) + "\n"
+                if isinstance(no2.parent, Edge):
+                    print "terminal: " + str(id(no2)) + "\n" + "objeto: " + "Edge" + "\n" + "Posição: " + str(no2.parent.scenePos()) + "\n"
+                else:
+                    print "terminal: " + str(id(no2)) + "\n" + "objeto: " + str(no2.parent.text.toPlainText()) + "\n" + "Posição: " + str(no2.parent.scenePos()) + "\n"
             print "=====================================================================\n\n"
 
         print "--------------------------------------------------------------------------"

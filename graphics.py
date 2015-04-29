@@ -391,7 +391,7 @@ class Node(QtGui.QGraphicsRectItem):
             rect = QtCore.QRectF(0, 0, 8, 8)
             self.text = Text('',self,self.scene())
             self.text.setPos(self.mapFromItem(self.text,0,rect.height()))
-
+            self.terminals = []
             self.no_de_carga = EnergyConsumer('', 0, 0)
 
             self.text = Text('', self, self.scene())
