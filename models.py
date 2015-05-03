@@ -372,7 +372,11 @@ class CimXML():
 
                     tag_qFixed = self.cim_xml.new_tag("qFixed")
                     tag_qFixed.append(str(item.no_de_carga.potencia_reativa))
-                    tag_energyConsumer.append(tag_qFixed)                   
+                    tag_energyConsumer.append(tag_qFixed) 
+
+                    tag_label = self.cim_xml.new_tag("Label")
+                    tag_label.append(str(item.text.toPlainText()))
+                    tag_energyConsumer.append(tag_label)                 
 
 
                     for Terminal in (item.terminals):
