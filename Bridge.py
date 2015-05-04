@@ -183,14 +183,33 @@ class Bridge(object):
 
         for no in self.lista_nos_de_carga:
             for no2 in no.vizinhos:
-                print str(no2.find('label').text)[3:5]
-                if no.setor != no2.setor and no2.name != "busbarsection":
-                    no.setor.vizinhos.append(no2.setor.nome)
+                # print str(no2.find('label').text)[3:5]
+                if no.setor != no2.setor:
+                    no.setor.vizinhos.append(no2.setor)
+
+        for no in self.lista_barras:
+            for no2 in no.vizinhos:
+                if no.setor != no2.setor:
+                    no.setor.vizinhos.append(no2.setor)
 
         for setor in setores:
-            if setor.nos[0].name != "busbarsection":
-                print setor.nome
-                print setor.vizinhos
+            tag_elemento_setor = xml_rnp.new_tag("elemento")
+            tag_elemento_setor["tipo"] = "setor"
+            tag_elemento_setor["nome"] = setor.nome
+            tag_vizinhos = xml_rnp.new_tag("vizinhos")
+            tag_nos = xml_rnp.new_tag("nos")
+            tag_elemento_setor.append(tag_vizinhos)
+            tag_elemento_setor.append(tag_nos)
+            for vizinho in setor.vizinhos:
+                tag_setor = xml_rnp.new_tag("setor")
+                tag_setor["nome"] = vizinho.nome
+                tag_vizinhos.append(tag_setor)
+            for no in setor.nos:
+                tag_no = xml_rnp.new_tag("no")
+                tag_no["nome"] = str(no.find('label').text)[3:5]
+                tag_nos.append(tag_no)
+            tag_topologia.append(tag_elemento_setor)
+
 
 
         
