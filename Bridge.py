@@ -162,6 +162,9 @@ class Bridge(object):
         for barra in self.lista_barras:
             setor = Setor()
             setor.nos.append(barra)
+            barra.setor = setor
+            barra.setor.nome = str(barra.find('label').text)[3:5]
+            print barra.setor.nome
             setores.append(setor)
 
 
