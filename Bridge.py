@@ -69,6 +69,7 @@ class Bridge(object):
         # Representação de todos os trechos
 
         for trecho in self.xml_cim.findAll("conductor"):
+            trecho.nos = []
             trecho_tag = xml_rnp.new_tag("trecho")
             nome = no_carga.find('mrid').text
 
@@ -81,6 +82,8 @@ class Bridge(object):
 
             trecho_tag.append(comprimento)
             tag_elementos.append(trecho_tag)
+
+            
 
         # Definição dos setores
 
@@ -179,18 +182,22 @@ class Bridge(object):
                 setor_tag["nome"] = setor.nome
             tag_elementos.append(setor_tag)
 
-        lista_chaves = self.xml_cim.findAll('breaker')
+        for chave in self.xml_cim.findAll('breaker'):
+            chave.setores = []
 
         for no in self.lista_nos_de_carga:
             for no2 in no.vizinhos:
-                # print str(no2.find('label').text)[3:5]
                 if no.setor != no2.setor:
                     no.setor.vizinhos.append(no2.setor)
+            for chave in no.chaves:
+                chave.setores.append(no.setor)
 
         for no in self.lista_barras:
             for no2 in no.vizinhos:
                 if no.setor != no2.setor:
                     no.setor.vizinhos.append(no2.setor)
+            for chave in no.chaves:
+                chave.setores.append(no.setor)
 
         for setor in setores:
             tag_elemento_setor = xml_rnp.new_tag("elemento")
@@ -210,7 +217,60 @@ class Bridge(object):
                 tag_nos.append(tag_no)
             tag_topologia.append(tag_elemento_setor)
 
+        lista_chaves = self.xml_cim.findAll('breaker')
+        for chave in lista_chaves:
+            tag_elemento_chave = xml_rnp.new_tag("elemento")
+            tag_elemento_chave["tipo"] = "chave"
+            tag_elemento_chave["nome"] = str(chave.find('mrid').text)[10:18]
+            tag_n1 = xml_rnp.new_tag("n1")
+            tag_n2 = xml_rnp.new_tag("n2")
+            tag_elemento_chave.append(tag_n1)
+            tag_elemento_chave.append(tag_n2)
+            
+            tag_n1_setor = xml_rnp.new_tag("setor")
+            tag_n1_setor["nome"] = str(chave.setores[0].nome)
+            tag_n1.append(tag_n1_setor)
+            
+            tag_n2_setor = xml_rnp.new_tag("setor")
+            tag_n2_setor["nome"] = str(chave.setores[1].nome)
+            tag_n2.append(tag_n2_setor)
+            tag_topologia.append(tag_elemento_chave)
 
+
+        for trecho in self.xml_cim.findAll("conductor"):
+            if len(trecho.nos) != 0:
+                tag_elemento_trecho = xml_rnp.new_tag("elemento")
+                tag_elemento_trecho["nome"] = str(trecho.find('mrid').text)[10:18]
+                tag_elemento_trecho["tipo"] = "trecho"
+                tag_n1 = xml_rnp.new_tag("n1")
+                tag_n2 = xml_rnp.new_tag("n2")
+                tag_condutores = xml_rnp.new_tag("condutores")
+                tag_condutor = xml_rnp.new_tag("condutor")
+                tag_condutor["nome"] = "CAA 266R"
+                tag_condutores.append(tag_condutor)
+                tag_elemento_trecho.append(tag_n1)
+                tag_elemento_trecho.append(tag_n2)
+                tag_elemento_trecho.append(tag_condutores)
+
+                if trecho.nos[0].name == "breaker":
+                    tag_chave = xml_rnp.new_tag("chave")
+                    tag_chave["nome"] = str(trecho.nos[0].find("mrid").text)[10:18]
+                    tag_n1.append(tag_chave)
+                if trecho.nos[0].name == "energyconsumer":
+                    tag_no = xml_rnp.new_tag("no")
+                    tag_no["nome"] = str(trecho.nos[0].find("label").text)[3:5]
+                    tag_n1.append(tag_no)
+
+                if trecho.nos[1].name == "breaker":
+                    tag_chave = xml_rnp.new_tag("chave")
+                    tag_chave["nome"] = str(trecho.nos[1].find("mrid").text)[10:18]
+                    tag_n2.append(tag_chave)
+                if trecho.nos[1].name == "energyconsumer":
+                    tag_no = xml_rnp.new_tag("no")
+                    tag_no["nome"] = str(trecho.nos[1].find("label").text)[3:5]
+                    tag_n2.append(tag_no)
+
+                tag_topologia.append(tag_elemento_trecho)
 
         
 
@@ -317,6 +377,12 @@ class Bridge(object):
     def setor_pertence(self, breaker, setor):
         for item in breaker.setores:
             if item == setor:
+                return True
+        return False
+
+    def trecho_pertence(self, trecho, no):
+        for item in trecho.nos:
+            if item == no:
                 return True
         return False
 
@@ -491,6 +557,7 @@ class Bridge(object):
             for item2 in item.findAll('terminal'):
                 count += 1
             item.number = count
+
         
         
         
@@ -609,6 +676,11 @@ class Bridge(object):
                                                 print "Label: " + str(parent_conexao2.find('label'))
                                             print "Tracking Number: " + str(parent_conexao2.counter)
                                             print "Reference Number: " + str(parent_conexao2.number)
+                if parent_conexao.name == 'conductor':
+                    if self.trecho_pertence(parent_conexao, no_raiz_rot) == False:
+                        parent_conexao.nos.append(no_raiz_rot)
+                    if self.trecho_pertence(parent_conexao, parent_conexao2) == False:
+                        parent_conexao.nos.append(parent_conexao2)
                 if parent_conexao2 == no_raiz_antigo:
                     print "tentou voltar pro nó antigo!!"
                     if no_raiz_rot.counter ==  no_raiz_rot.number:
