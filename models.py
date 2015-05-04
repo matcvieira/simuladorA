@@ -4,7 +4,7 @@ from xml.dom import minidom
 from PySide import QtCore, QtGui
 from graphics import Node, Edge, Text
 from bs4 import BeautifulSoup
-from elementos import NoConect, Terminal, Religador, EnergyConsumer
+from elementos import NoConect, Terminal, Religador, EnergyConsumer, Substation, BusBarSection
 
 
 
@@ -99,6 +99,45 @@ class DiagramToXML(ElementTree.Element):
                     CE.append(p_ativa)
                     CE.append(p_reativa)
 
+                if item.myItemType == Node.Subestacao:
+                    identificador = ElementTree.Element('identificador')
+                    identificador.text = str(item.text.toPlainText())
+                    
+                    tensao_p = ElementTree.Element('tensaop')
+                    tensao_p.text = str(item.substation.tensao_primario)
+
+                    tensao_s = ElementTree.Element('tensaos')
+                    tensao_s.text = str(item.substation.tensao_secundario)
+
+                    potencia = ElementTree.Element('potencia')
+                    potencia.text = str(item.substation.potencia)
+
+                    impedancia = ElementTree.Element('impedancia')
+                    impedancia.text = str(item.substation.impedancia)
+
+                    CE.append(identificador)
+                    CE.append(tensao_p)
+                    CE.append(tensao_s)
+                    CE.append(potencia)
+                    CE.append(impedancia)
+
+                if item.myItemType == Node.Barra:
+                    identificador = ElementTree.Element('identificador')
+                    identificador.text = str(item.text.toPlainText())
+
+                    fases = ElementTree.Element('fases')
+                    fases.text = str(item.barra.phases)
+
+                    CE.append(identificador)
+                    CE.append(fases)
+
+
+
+
+
+
+
+
 
 
 
@@ -155,12 +194,20 @@ class XMLToDiagram():
                 if child.attrib['type'] == '0':
                     item = Node(
                         int(child.attrib['type']), self.scene.mySubstationMenu)
+                    identificador = child.find('identificador').text
+                    tensaop = child.find('tensaop').text
+                    tensaos = child.find('tensaos').text
+                    potencia = child.find('potencia').text
+                    impedancia = child.find('impedancia').text
+                    item.substation = Substation(identificador, int(tensaop), int(tensaos), int(potencia), int(impedancia))
                     self.scene.addItem(item)
                     item.setPos(
                         float(child.find('x').text), float(
                             child.find('y').text))
                     item.id = int(child.find('id').text)
+                    item.text.setPlainText(identificador)
 
+                #RELIGADOR
                 elif child.attrib['type'] == '1':
                     item = Node(
                         int(child.attrib['type']), self.scene.myRecloserMenu)
@@ -178,9 +225,14 @@ class XMLToDiagram():
                     self.scene.addItem(item)
                     item.text.setPlainText(identificador)
                     #item.text = Text(identificador, item, item.scene())
+
+                #BARRA
                 elif child.attrib['type'] == '2':
                     item = Node(int(
                         child.attrib['type']), self.scene.myBusMenu)
+                    identificador = child.find('identificador').text
+                    fases = child.find('fases').text
+                    item.barra = BusBarSection(identificador, int(fases))
                     item.setPos(float(child.find('x').text), float(
                         child.find('y').text))
                     item.id = int(child.find('id').text)
@@ -188,6 +240,7 @@ class XMLToDiagram():
                         0, 0, float(child.find('width').text), float(
                             child.find('height').text))
                     self.scene.addItem(item)
+                    item.text.setPlainText(identificador)
 
                 elif child.attrib['type'] == '3':
                     item = Node(int(child.attrib['type']), None)
@@ -208,9 +261,8 @@ class XMLToDiagram():
                             child.find('y').text))
                     item.id = int(child.find('id').text)
                     self.scene.addItem(item)
-                    if identificador != "None":
-                        print "Não é None"
-                        item.text.setPlainText(identificador)
+                    
+                    item.text.setPlainText(identificador)
 
                 elif child.attrib['type'] == '5':
                     item = Node(int(child.attrib['type']), None)
@@ -313,6 +365,10 @@ class CimXML():
                     tag_phases.append(str(item.barra.phases))
                     tag_barra.append(tag_phases)
 
+                    tag_label = self.cim_xml.new_tag("label")
+                    tag_label.append(str(item.text.toPlainText()))
+                    tag_barra.append(tag_label) 
+
                     for Terminal in (item.terminals):
                         tag_terminal = self.cim_xml.new_tag("terminal")
                         tag_mRID = self.cim_xml.new_tag('mRID')
@@ -374,7 +430,7 @@ class CimXML():
                     tag_qFixed.append(str(item.no_de_carga.potencia_reativa))
                     tag_energyConsumer.append(tag_qFixed) 
 
-                    tag_label = self.cim_xml.new_tag("Label")
+                    tag_label = self.cim_xml.new_tag("label")
                     tag_label.append(str(item.text.toPlainText()))
                     tag_energyConsumer.append(tag_label)                 
 
