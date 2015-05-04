@@ -89,14 +89,9 @@ class Bridge(object):
         # Definir lista geral de todos os nós conectivos com seus mrid's
         self.lista_nosconect = self.xml_cim.findAll("connectivitynode")
         # Definir a lista de barras
-        lista_barras = self.xml_cim.findAll("busbarsection")
-        setores = self.definir_setores()
+        # lista_barras = self.xml_cim.findAll("busbarsection")
         
-        for setor in setores:
-
-            setor_tag = xml_rnp.new_tag("setor")
-            setor_tag["nome"] = setor.nome
-            tag_elementos.append(setor_tag)
+        
 
         for substation in self.xml_cim.findAll('substation'):
             substation_tag = xml_rnp.new_tag('subestacao')
@@ -104,13 +99,38 @@ class Bridge(object):
             tag_elementos.append(substation_tag)
         print "--------------------------------------------------------------------------------"
         print "VIZINHANÇAS"
+        self.lista_barras = []
         self.lista_nos_de_carga = self.xml_cim.findAll('energyconsumer')
         
         print "VIZINHOS: "
         for no in self.lista_nos_de_carga:
-            (vizinhos, chaves) = self.definir_vizinhos(no)
+            (vizinhos, chaves) = self.definir_vizinhos(no, 0)
             no.vizinhos = vizinhos
             no.chaves = chaves
+
+
+        for no in self.lista_barras:
+            (vizinhos, chaves) = self.definir_vizinhos(no, 1)
+            no.vizinhos = vizinhos
+            no.chaves = chaves
+
+        for no in self.lista_barras:
+            tag_elemento_no = xml_rnp.new_tag("elemento")
+            tag_elemento_no["nome"] = str(no.find('label').text)[3:5]
+            tag_elemento_no["tipo"] = "no"            
+            tag_vizinhos = xml_rnp.new_tag("vizinhos")
+            tag_chaves = xml_rnp.new_tag("chaves")
+            tag_elemento_no.append(tag_vizinhos)
+            tag_elemento_no.append(tag_chaves)
+            for vizinho in no.vizinhos:
+                tag_vizinho_no = xml_rnp.new_tag("no")
+                tag_vizinho_no["nome"] = str(vizinho.find('label').text)[3:5]
+                tag_vizinhos.append(tag_vizinho_no)
+            for chave in no.chaves:
+                tag_chave = xml_rnp.new_tag("chave")
+                tag_chave["nome"] = str(chave.find('mrid').text)[10:18]
+                tag_chaves.append(tag_chave)
+            tag_topologia.append(tag_elemento_no)
 
         # for no in self.lista_nos_de_carga:
         #     # print "VIZINHOS DE " + str(no.find('label').text)
@@ -136,6 +156,50 @@ class Bridge(object):
                 tag_chave["nome"] = str(chave.find('mrid').text)[10:18]
                 tag_chaves.append(tag_chave)
             tag_topologia.append(tag_elemento_no)
+
+        setores = self.definir_setores()
+
+        for barra in self.lista_barras:
+            setor = Setor()
+            setor.nos.append(barra)
+            setores.append(setor)
+
+
+        for setor in setores:
+
+            setor.vizinhos =[]
+
+            setor_tag = xml_rnp.new_tag("setor")
+            if setor.nos[0].name == "busbarsection":
+                setor_tag["nome"] = str(setor.nos[0].find('label').text)[3:5]
+            else:
+                setor_tag["nome"] = setor.nome
+            tag_elementos.append(setor_tag)
+
+        lista_chaves = self.xml_cim.findAll('breaker')
+
+        for no in self.lista_nos_de_carga:
+            for no2 in no.vizinhos:
+                print str(no2.find('label').text)[3:5]
+                if no.setor != no2.setor and no2.name != "busbarsection":
+                    no.setor.vizinhos.append(no2.setor.nome)
+
+        for setor in setores:
+            if setor.nos[0].name != "busbarsection":
+                print setor.nome
+                print setor.vizinhos
+
+
+        
+
+        
+
+        
+        
+
+
+
+
 
 
 
@@ -222,9 +286,21 @@ class Bridge(object):
                 return True
         return False
 
-    def definir_vizinhos(self, no):
+    def is_lista_barras(self, barra):
+        for item in self.lista_barras:
+            if item == barra:
+                return True
+        return False
+
+    def setor_pertence(self, breaker, setor):
+        for item in breaker.setores:
+            if item == setor:
+                return True
+        return False
+
+
+    def definir_vizinhos(self, no, mode):
          # Começar um caminho a partir de uma barra
-        
         no_original = no
         no_raiz_encontrado = False
         no_rot = no
@@ -239,12 +315,20 @@ class Bridge(object):
             for item2 in item.findAll('terminal'):
                 count += 1
             item.number = count
+
+        for item in self.xml_cim.findAll('busbarsection'):
+            item.counter = 0
+            count = 0
+            for item2 in item.findAll('terminal'):
+                count += 1
+            item.number = count
         count = 0
         # reset_counter = 0
         
         reset_counter = 0
         while terminal_counter < no_original.number:
             print "Nó Inicial: " + str(no_rot.name)
+            print no_rot.number
             if no_rot.name == "energyconsumer":
                 print "Label: " + str(no_rot.find('label'))
             if no_rot.name == "breaker":
@@ -263,6 +347,8 @@ class Bridge(object):
                 # Loop interno: varre todos os terminais do referido nó conectivo, excetuando
                 # o próprio terminal analisado, obviamente. Ou seja, o objetivo é descobrir com
                 # que terminais o terminal em questão se conecta.
+                
+
                 for conexao in lista_conexoes:
                     if conexao.find('mrid') != terminal.find('mrid'):
                         # print conexao
@@ -303,10 +389,28 @@ class Bridge(object):
                                         if conexao2.find('mrid') != no.find('mrid'):
                                             parent_conexao2 = self.achar_parent(conexao2)
                                             print "Nó Final: " + str(parent_conexao2.name)
+
+                if parent_conexao.name == "substation":
+                    terminal_counter += 1
+                    continue
+                if parent_conexao.name == "breaker":
+                    if self.is_chave(no_original, parent_conexao) == False:
+                        no_original.chaves.append(parent_conexao)
+                        no_rot = parent_conexao
+                        break
+                    else:
+                        continue
                 if parent_conexao.name == 'busbarsection':
+                    if mode == 1:
+                        continue
                     no_original.vizinhos.append(parent_conexao)
-                    no_rot = no_original
-                    break
+                    if self.is_lista_barras(parent_conexao) == False:
+                        self.lista_barras.append(parent_conexao)
+                        no_rot = no_original
+                        continue
+                    else:
+                        break
+                
                 if parent_conexao2.name == "breaker":
                     print "ID: " + str(parent_conexao2.find('mrid'))
                     if no_rot.name == "breaker":
@@ -332,17 +436,22 @@ class Bridge(object):
                             break
 
                     if no_rot.name == "energyconsumer":
+                        if parent_conexao2 == no_rot:
+                            continue
                         if self.is_vizinho(no_original, parent_conexao2) == False:
                             print "Vizinho Adicionado!"
                             no_original.vizinhos.append(parent_conexao2)
                             terminal_counter += 1
             print "--------------------------------------------------------------------------------------------"
+        print "FIM"
         return (no_original.vizinhos, no_original.chaves)
+
     def definir_setores(self):
 
         for terminal in self.lista_terminais:
             terminal.marcado = False
         for item in self.xml_cim.findAll('breaker'):
+            item.setores = []
             item.counter = 0
             count = 0
             for item2 in item.findAll('terminal'):
@@ -509,6 +618,7 @@ class Bridge(object):
                                     print "SETOR: "
                                     for item in setor.nos:
                                         print str(item.find('label').text)
+                                        item.setor = setor
                                 self.lista_religadores_usados.append(no_raiz)
                                 for elemento in setor.nos:
                                     self.nos_percorridos.append(elemento)
@@ -539,6 +649,7 @@ class Bridge(object):
                         self.nos_percorridos.append(parent_conexao2)
                         print "marcado como percorrido."
                         self.lista_religadores_nao_usados.append(parent_conexao2)
+                        
                         no_counter = no_raiz_rot.counter
                         no_number = no_raiz_rot.number
                         
