@@ -12,9 +12,10 @@ from DialogSubstation import SubstationDialog
 from DialogEnergyConsumer import EnergyConsumerDialog
 from aviso_conexao import AvisoConexaoDialog
 from avisoReligador import AvisoReligador
-from avisoNome import AvisoNome
 
 lista_no_conectivo = []
+
+print 'este e um teste de commit'
 
 class DashedLine(QtGui.QGraphicsLineItem):
 
