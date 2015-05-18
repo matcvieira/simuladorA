@@ -29,6 +29,7 @@ class Substation(object):
         self.tensao_secundario = tensao_secundario
         self.potencia = potencia
         self.impedancia = impedancia
+        self.alimentadores = []
         
 
 class BusBarSection(object):

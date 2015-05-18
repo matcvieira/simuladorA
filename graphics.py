@@ -12,10 +12,9 @@ from DialogSubstation import SubstationDialog
 from DialogEnergyConsumer import EnergyConsumerDialog
 from aviso_conexao import AvisoConexaoDialog
 from avisoReligador import AvisoReligador
+from avisoNome import AvisoNome
 
 lista_no_conectivo = []
-
-print 'este e um teste de commit'
 
 class DashedLine(QtGui.QGraphicsLineItem):
 
@@ -292,10 +291,10 @@ class Text(QtGui.QGraphicsTextItem):
         super(Text, self).__init__(parent, scene)
         self.setPlainText(text)
         self.setZValue(100)
-        self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, True)
+        self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, False)
         self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable, False)
-        #self.setTextInteractionFlags(
-            #QtCore.Qt.TextInteractionFlag.TextEditorInteraction)
+        # self.setTextInteractionFlags(
+        #     QtCore.Qt.TextInteractionFlag.TextEditorInteraction)
         # self.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
         # self.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByKeyboard)
 
@@ -1302,13 +1301,18 @@ class SceneWidget(QtGui.QGraphicsScene):
         self.myMode = mode
 
     def change_state(self):
-        
+        print "entrou"
         
         for item in self.selectedItems():
             if item.myItemType == Node.Religador:
                 aviso = AvisoReligador(item.chave.normalOpen, item.chave.nome)
-                if aviso.dialog.result() == 1:                
-                    item.chave.normalOpen = not item.chave.normalOpen
+                if aviso.dialog.result() == 1: 
+                    print item.chave.normalOpen
+                    if item.chave.normalOpen == 1:               
+                        item.chave.normalOpen = 0
+
+                    elif item.chave.normalOpen == 0:
+                        item.chave.normalOpen = 1
                     item.setSelected(False)
                     item.setSelected(True)
                     print item.chave.normalOpen

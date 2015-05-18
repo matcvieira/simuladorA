@@ -72,11 +72,8 @@ class DiagramToXML(ElementTree.Element):
                     seq_rel.text = str(item.chave.recloseSequences)
 
                     estado = ElementTree.Element('estado')
-                    if item.chave.normalOpen == True:
-                        state = 1
-                    else:
-                        state = 0
-                    estado.text = str(state)
+                    estado.text = str(item.chave.normalOpen)
+                    
                     CE.append(estado)
                     CE.append(corrente)
                     CE.append(in_tt)
@@ -199,7 +196,7 @@ class XMLToDiagram():
                     tensaos = child.find('tensaos').text
                     potencia = child.find('potencia').text
                     impedancia = child.find('impedancia').text
-                    item.substation = Substation(identificador, int(tensaop), int(tensaos), int(potencia), int(impedancia))
+                    item.substation = Substation(identificador, float(tensaop), float(tensaos), float(potencia), impedancia)
                     self.scene.addItem(item)
                     item.setPos(
                         float(child.find('x').text), float(
@@ -232,7 +229,7 @@ class XMLToDiagram():
                         child.attrib['type']), self.scene.myBusMenu)
                     identificador = child.find('identificador').text
                     fases = child.find('fases').text
-                    item.barra = BusBarSection(identificador, int(fases))
+                    #item.barra = BusBarSection(identificador, int(fases))
                     item.setPos(float(child.find('x').text), float(
                         child.find('y').text))
                     item.id = int(child.find('id').text)
@@ -445,54 +442,57 @@ class CimXML():
         for item in scene.items():
             if isinstance(item, Edge):
 
-                    tag_conductor = self.cim_xml.new_tag("Conductor")
-                    self.cim_xml.append(tag_conductor)
-                    
-                    tag_id = self.cim_xml.new_tag("mRID")
-                    tag_id.append(str(item.linha.id))
-                    tag_conductor.append(tag_id)
+                if item.w1.myItemType == Node.Subestacao or item.w2.myItemType == Node.Subestacao:
+                    continue
 
-                    tag_length = self.cim_xml.new_tag("length")
-                    tag_length.append(str(item.linha.comprimento))
-                    tag_conductor.append(tag_length)
+                tag_conductor = self.cim_xml.new_tag("Conductor")
+                self.cim_xml.append(tag_conductor)
+                
+                tag_id = self.cim_xml.new_tag("mRID")
+                tag_id.append(str(item.linha.id))
+                tag_conductor.append(tag_id)
 
-                    tag_r = self.cim_xml.new_tag("r")
-                    tag_r.append(str(item.linha.resistencia))
-                    tag_conductor.append(tag_r)
+                tag_length = self.cim_xml.new_tag("length")
+                tag_length.append(str(item.linha.comprimento))
+                tag_conductor.append(tag_length)
 
-                    tag_r0 = self.cim_xml.new_tag("r0")
-                    tag_r0.append(str(item.linha.resistencia_zero))
-                    tag_conductor.append(tag_r0)
+                tag_r = self.cim_xml.new_tag("r")
+                tag_r.append(str(item.linha.resistencia))
+                tag_conductor.append(tag_r)
 
-                    tag_x = self.cim_xml.new_tag("x")
-                    tag_x.append(str(item.linha.reatancia))
-                    tag_conductor.append(tag_x) 
+                tag_r0 = self.cim_xml.new_tag("r0")
+                tag_r0.append(str(item.linha.resistencia_zero))
+                tag_conductor.append(tag_r0)
 
-                    tag_x0 = self.cim_xml.new_tag("x0")
-                    tag_x0.append(str(item.linha.reatancia_zero))
-                    tag_conductor.append(tag_x0)
+                tag_x = self.cim_xml.new_tag("x")
+                tag_x.append(str(item.linha.reatancia))
+                tag_conductor.append(tag_x) 
 
-                    tag_currentLimit = self.cim_xml.new_tag("currentLimit")
-                    tag_currentLimit.append(str(item.linha.ampacidade))
-                    tag_conductor.append(tag_currentLimit)                   
+                tag_x0 = self.cim_xml.new_tag("x0")
+                tag_x0.append(str(item.linha.reatancia_zero))
+                tag_conductor.append(tag_x0)
 
-                    tag_terminal1= self.cim_xml.new_tag("terminal")
-                    tag_seqNumber = self.cim_xml.new_tag("SequenceNumber")
-                    tag_seqNumber.append("1")
-                    tag_terminal1.append(tag_seqNumber)
-                    tag_mRID = self.cim_xml.new_tag("mRID")
-                    tag_mRID.append(str(item.terminal1.mRID))
-                    tag_terminal1.append(tag_mRID)
-                    tag_conductor.append(tag_terminal1)
+                tag_currentLimit = self.cim_xml.new_tag("currentLimit")
+                tag_currentLimit.append(str(item.linha.ampacidade))
+                tag_conductor.append(tag_currentLimit)                   
 
-                    tag_terminal2= self.cim_xml.new_tag("terminal")
-                    tag_seqNumber = self.cim_xml.new_tag("SequenceNumber")
-                    tag_seqNumber.append("2")
-                    tag_terminal1.append(tag_seqNumber)
-                    tag_mRID = self.cim_xml.new_tag("mRID")
-                    tag_mRID.append(str(item.terminal2.mRID))
-                    tag_terminal2.append(tag_mRID)
-                    tag_conductor.append(tag_terminal2)
+                tag_terminal1= self.cim_xml.new_tag("terminal")
+                tag_seqNumber = self.cim_xml.new_tag("SequenceNumber")
+                tag_seqNumber.append("1")
+                tag_terminal1.append(tag_seqNumber)
+                tag_mRID = self.cim_xml.new_tag("mRID")
+                tag_mRID.append(str(item.terminal1.mRID))
+                tag_terminal1.append(tag_mRID)
+                tag_conductor.append(tag_terminal1)
+
+                tag_terminal2= self.cim_xml.new_tag("terminal")
+                tag_seqNumber = self.cim_xml.new_tag("SequenceNumber")
+                tag_seqNumber.append("2")
+                tag_terminal2.append(tag_seqNumber)
+                tag_mRID = self.cim_xml.new_tag("mRID")
+                tag_mRID.append(str(item.terminal2.mRID))
+                tag_terminal2.append(tag_mRID)
+                tag_conductor.append(tag_terminal2)
 
 
         for no in self.lista_no_conectivo:
