@@ -190,86 +190,64 @@ class Edge(QtGui.QGraphicsLineItem):
             # Seta flag de w2, indicando que este item está fixo na barra.
             self.w2.Fixed = True
             # Se o número de linhas conectas a barra for maior que 1 deve-se
-            # proceder a logica de distribuicao e alinhamento
+            # proceder a lógica de distribuição e alinhamento.
             if len(self.w1.edges) > 1:
-                # insere a linha em seu local de distribuicao calculado pelo
-                # item grafico barra
+                # Insere a linha em seu local de distribuição calculado pelo
+                # item gráfico barra. Este local é determinado pela função
+                # edge_position (Ver classe Node).
                 line = QtCore.QLineF(self.mapFromItem(
                     self.w1, self.w1.rect().center().x(),
                     self.w1.edge_position(
                         self)), self.mapFromItem(
                     self.w2, self.w2.rect().center()))
-
-
-                # alinha o item religador conectado ao item Barra com a linha
-                # que conecta esses dois items
-                # self.w2.setY(self.mapFromItem(
-                #     self.w1, self.w1.rect().center().x(),
-                #     self.w1.edge_position(
-                #         self)).y() - 10)
-                
-                pos = self.w2.adjust_in_grid(QtCore.QPointF(self.w2.scenePos().x(),line.y1()))
+                # Ajusta o item w2 na grade invisível presente no diagrama.
+                # (Ver classe Node, função "adjust_in_grid")
+                pos = self.w2.adjust_in_grid(
+                    QtCore.QPointF(self.w2.scenePos().x(), line.y1()))
                 self.w2.setPos(pos)
 
-                line.setLine(line.x1(),self.w2.y()+10,line.x2(),line.y2())
-                
-
-
-                
-
-                #line.setLine(line.x1(),self.w2.scenePos().y()+10,line.x2(),line.y2())
-                if self.w2.myItemType == Node.NoConectivo:
-                    self.w2.setY(self.mapFromItem(
-                    self.w1, self.w1.rect().center().x(),
-                    self.w1.edge_position(
-                        self)).y() -5)
+                # Ajusta a linha finalde acordo com o local de distribuição
+                # com a correção do ajuste na grade.
+                line.setLine(line.x1(), self.w2.y() + 10, line.x2(), line.y2())
+                # Fixa o item w2.
                 self.w2.fix_item()
-            # se não os items são apenas conectados
+            # Se esta é a primeira ligação da linha, realiza-se uma ligação
+            # normal.
             else:
                 line = QtCore.QLineF(self.mapFromItem(
                     self.w1, self.w1.rect().center()), self.mapFromItem(
                     self.w2, self.w2.rect().center()))
 
-        # Se o item self.w2 for do tipo barra deve-se alinhar o item self.w1
-        elif self.w2.myItemType == Node.Barra and self.w1.myItemType != Node.Subestacao:
+        # Se o item self.w2 for do tipo barra deve-se alinhar o item self.w1.
+        # O procedimento é análogo ao exposto acima.
+        elif (self.w2.myItemType == Node.Barra
+                and self.w1.myItemType != Node.Subestacao):
             self.fixFlag = True
             self.w1.Fixed = True
-            # se o numero de linhas conectas a barra for maior que 1 deve-se
-            # proceder a logica de distribuicao e alinhamento
             if len(self.w2.edges) > 1:
-                # insere a linha em seu local de distribuicao calculado pelo
-                # item grafico barra
                 line = QtCore.QLineF(self.mapFromItem(
                     self.w1, self.w1.rect().center()), self.mapFromItem(
                     self.w2, self.w2.rect().center().x(),
                     self.w2.edge_position(
                         self)))
-                # alinha o item religador conectado ao item Barra com alinha
-                # que conecta esses dois items
                 self.w1.setY(self.mapFromItem(
                     self.w2, self.w2.rect().center().x(),
                     self.w2.edge_position(
                         self)).y() - 12.5)
                 self.w1.fix_item()
-            # se não os items são apenas conectados
             else:
                 line = QtCore.QLineF(self.mapFromItem(
                     self.w1, self.w1.rect().center()), self.mapFromItem(
                     self.w2, self.w2.rect().center()))
-        # se nenhum dos items for do tipo Barra então os items são apenas
-        # conectados
         else:
             line = QtCore.QLineF(self.mapFromItem(
                 self.w1, self.w1.rect().center()), self.mapFromItem(
                 self.w2, self.w2.rect().center()))
-
-        # line = QtCore.QLineF(self.mapFromItem(
-            # self.w1, self.w1.rect().center()) , self.mapFromItem(
-            # self.w2, self.w2.rect().center()))
-
         self.setLine(line)
         if self.fixFlag:
             self.isFixed = True
+
+        # Define a caneta e o preenchimento da linha.
 
         painter.setPen(QtGui.QPen(QtCore.Qt.black,  # QPen Brush
                                                     2,  # QPen width
@@ -283,6 +261,8 @@ class Edge(QtGui.QGraphicsLineItem):
         painter.setBrush(QtCore.Qt.black)
         painter.drawLine(self.line())
 
+        # Se a linha for selecionado, desenha uma linha tracejada ao redor
+        # da linha selecionada.
         if self.isSelected():
             painter.setPen(QtGui.QPen(QtCore.Qt.red, 2, QtCore.Qt.DashLine))
             my_line = QtCore.QLineF(line)
@@ -292,61 +272,70 @@ class Edge(QtGui.QGraphicsLineItem):
             painter.drawLine(my_line)
 
     def mousePressEvent(self, mouse_event):
+        '''
+            Metodo que reimplementa a função de press do Mouse (ver biblioteca
+            PySide, mouse events)
+        '''
+        # Se a linha for pressionada, seta a mesma como selecionada, para que
+        # a linha tracejada seja desenhada.
         self.setSelected(True)
-        #print id(self.linha)
         super(Edge, self).mousePressEvent(mouse_event)
         return
 
-
     def contextMenuEvent(self, event):
+        '''
+            Reimplementação da função virtual contextMenuEvent, que define menu
+            que aparece com o clique direito do mouse (ver biblioteca Pyside,
+            contextMenuEvent)
+        '''
         self.scene().clearSelection()
         self.setSelected(True)
-        self.myEdgeMenu.exec_(event.screenPos() + QtCore.QPointF(20,20))
+        self.myEdgeMenu.exec_(event.screenPos() + QtCore.QPointF(20, 20))
 
 
 class Text(QtGui.QGraphicsTextItem):
     '''
-        Classe que implementa o objeto Text Generico
+        Classe que implementa o objeto Text Genérico
     '''
 
+    # Cria dois sinais, um relacionado à mudança de posição/geometria do item
+    # e outro a quando o item perde o foco, ou deixa de estar selecionado.
+    # (ver PySide, QtCore.Signal)
     selectedChange = QtCore.Signal(QtGui.QGraphicsItem)
     lostFocus = QtCore.Signal(QtGui.QGraphicsTextItem)
 
     def __init__(self, text, parent=None, scene=None):
-
+        '''
+            Configurações do texto (ver PySide, QtGui.QGraphicsTextItem)
+        '''
         super(Text, self).__init__(parent, scene)
         self.setPlainText(text)
         self.setZValue(100)
         self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, False)
         self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable, False)
-        # self.setTextInteractionFlags(
-        #     QtCore.Qt.TextInteractionFlag.TextEditorInteraction)
-        # self.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
-        # self.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByKeyboard)
-
-    #def mouseDoubleClickEvent(self, event):
-       # '''
-          #  Metodo que trata o evento de duplo click no item grafico texto
-         #   para edicao de seu conteudo
-        #'''
-     #   if self.textInteractionFlags() == QtCore.Qt.NoTextInteraction:
-       #     self.setTextInteractionFlags(QtCore.Qt.TextEditorInteraction)
-      #  super(Text, self).mouseDoubleClickEvent(event)
 
     def itemChange(self, change, value):
+        '''
+            Função virtual reimplementada para emitir sinal de mudança (ver
+            Pyside, QGraphicsTextItem)
+        '''
         if change == QtGui.QGraphicsItem.ItemSelectedChange:
             self.selectedChange.emit(self)
         return value
 
     def focusOutEvent(self, event):
-        # self.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
+        '''
+            Função virtual reimplementada para emitir sinal de perda de foco
+            (ver Pyside, QGraphicsTextItem)
+        '''
         self.lostFocus.emit(self)
         super(Text, self).focusOutEvent(event)
 
 
 class Node(QtGui.QGraphicsRectItem):
     '''
-       Classe que implementa o objeto Node Genérico.
+       Classe que implementa o objeto Node Genérico. Este elemento gráfico irá
+       representar religadores, barras, subestações e nós de carga
     '''
     # tipos de itens possiveis
     Subestacao, Religador, Barra, Agent, NoDeCarga, NoConectivo = range(6)
@@ -354,78 +343,96 @@ class Node(QtGui.QGraphicsRectItem):
     def __init__(self, item_type, node_menu, parent=None, scene=None):
         '''
             Método inicial da classe Node
-            Recebe como parâmetros os objetos myItemType que define o tipo de
-            Node desejado e x, y a posicao do objeto Node. Define o objeto
-            QtCore.QRectF que define o retangulo que representa o objeto
-            QtGui.QGraphicsRectItem.
+            Recebe como parâmetros os objetos myItemType (que define o tipo de
+            Node desejado) e o menu desejado (menu que abre com clique direito)
+            Analogamente ao que acontece com a Edge, este item é apenas a
+            representação de um retângulo do tipo QtCore.QRectF.
         '''
         super(Node, self).__init__()
-        self.adjusted = False
-        self.id = id(self)
-        self.edges = {}
-        self.l0 = None
-        self.edges_no_sub = {}
-        self.myItemType = item_type
-        self.Fixed = False
-        self.edge_counter = 0
-        self.bar_busy = False
-        self.mean_pos = None
-        self.semiFixed = False
-        self.text_config = 'Custom'
-        self.pos_ref = 0
-        self.lock_h = False
-        self.lock_v = False
-        self.collider_counter = 0
+        # Definição de atributos do tipo flag
         self.con_lock = False
-        # self.terminal1 = Terminal(self)
-        # self.terminal2 = Terminal(self)
-        # caso o item a ser inserido seja do tipo subestacao
+        self.adjusted = False
+        self.bar_busy = False
+        self.Fixed = False
+        self.semiFixed = False
+        # Definição de diversos atributos que serão usados posteriormente
+        self.id = id(self)              # Atributo que guarda id única do item
+        self.edges = {}                 # Dicionário contendo edges do item
+        self.l0 = None                  # Variável auxiliar de posição
+        self.edges_no_sub = {}          # Falta perguntar ao lucas o que é isso
+        self.myItemType = item_type     # Define o tipo de item
+        self.edge_counter = 0           # Contador que acompanha o nº de edges
+        self.mean_pos = None            # Atributo de posição média
+        self.text_config = 'Custom'     # Atributo da configuração de relé
+        self.pos_ref = 0                # Atributo de posição referência
+        # Se o item a ser inserido for do tipo subestação:
         if self.myItemType == self.Subestacao:
+            # Define o retângulo.
             rect = QtCore.QRectF(0, 0, 50.0, 50.0)
-            # definine e ajusta a posicao do label do item grafico
+            # Define e ajusta a posição do label do item gráfico. Começa com
+            # um texto vazio.
             self.text = Text('', self, self.scene())
-            self.substation = Substation(self.text.toPlainText(), 0.0, 0.0, 0.0, complex(0,0))
+            self.substation = Substation(
+                self.text.toPlainText(), 0.0, 0.0, 0.0, complex(0, 0))
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
-        # caso o item a ser inserido seja do tipo religador
+        # Se o item a ser inserido for do tipo religador:
         elif self.myItemType == self.Religador:
             rect = QtCore.QRectF(0, 0, 20, 20)
-            # Cria o objeto abstrato chave referente ao religador 
-            # definine e ajusta a posicao do label do item grafico
+            # Define e ajusta a posição do label do item gráfico. Começa com
+            # um texto vazio.
             self.text = Text('', self, self.scene())
-            self.chave = Religador(self.text.toPlainText(),0,0,0,0,1)     
             self.text.setPos(self.mapFromItem(self.text, 10, rect.height()))
-            
-        # caso o item a ser inserido seja do tipo barra
+            # Cria o objeto chave que contém os dados elétricos do elemento
+            # religador.
+            self.chave = Religador(self.text.toPlainText(), 0, 0, 0, 0, 1)
+        # Se o item a ser inserido for do tipo barra:
         elif self.myItemType == self.Barra:
             rect = QtCore.QRectF(0, 0, 10.0, 100.0)
-            self.barra = BusBarSection("Identificador")
-            # definine e ajusta a posicao do label do item grafico
+            # Define e ajusta a posição do label do item gráfico. Começa com
+            # um texto vazio.
             self.text = Text('Barra', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
+            # Cria o objeto barra que contém os dados elétricos do elemento
+            # barra.
+            self.barra = BusBarSection("Identificador")
+            # Define uma lista vazia com os terminais que possivelmente a barra
+            # terá
             self.terminals = []
-        # caso o item a ser inserido seja do tipo agent
+        # Se o item a ser inserido for do tipo agente:
+        # OBS: PERGUNTAR PRO LUCAS SE O ABAIXO É NECESSÁRIO
         elif self.myItemType == self.Agent:
             rect = QtCore.QRectF(0, 0, 50.0, 50.0)
-            # definine e ajusta a posicao do label do item grafico
+            # Define e ajusta a posição do label do item gráfico. Começa com
+            # o texto Agente.
             self.text = Text('Agente', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
-        # caso o item a ser inserido seja do tipo nó conectivo
+
+        # OBS: PERGUNTAR SE AINDA É NECESSÁRIO A PRESENÇA DE UM NÓ CONECTIVO
+        # Se o item a ser inserido for do tipo nó conectivo:
         elif self.myItemType == self.NoConectivo:
             rect = QtCore.QRectF(0, 0, 7, 7)
 
+        # Se o item a ser inserido for do tipo nó de carga:
         elif self.myItemType == self.NoDeCarga:
             rect = QtCore.QRectF(0, 0, 8, 8)
-            self.text = Text('',self,self.scene())
-            self.text.setPos(self.mapFromItem(self.text,0,rect.height()))
-            self.terminals = []
-            self.no_de_carga = EnergyConsumer('', 0, 0)
-
+            # Define e ajusta a posição do label do item gráfico. Começa com
+            # um texto vazio.
             self.text = Text('', self, self.scene())
             self.text.setPos(self.mapFromItem(self.text, 0, rect.height()))
-
+            # Define uma lista vazia com os terminais que possivelmente o nó
+            # de carga terá
+            self.terminals = []
+            # Cria o objeto barra que contém os dados elétricos do elemento
+            # barra.
+            self.no_de_carga = EnergyConsumer('', 0, 0)
+        # Estabelece o retângulo do item gráfico como o rect obtido, dependendo
+        # do item.
         self.setRect(rect)
+        # Estabelece o menu (aberto via clique direito) dependendo do tipo de
+        # item.
         self.myNodeMenu = node_menu
 
+        # Seta as flags do QGraphicsItem (ver QtGui.QGraphicsItem.setFlag)
         self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable, True)
         self.setFlag(QtGui.QGraphicsItem.ItemIsFocusable, True)
@@ -433,56 +440,83 @@ class Node(QtGui.QGraphicsRectItem):
         self.setZValue(0)
 
     def fix_item(self):
+        '''
+            Seta a flag de fixação do item.
+        '''
         self.Fixed = True
 
     def update_count(self):
+        '''
+            Atualiza o contador que acompanha o número de Edges do item.
+        '''
         self.edge_counter = len(self.edges)
+
     def remove_edges(self):
         '''
-            Metodo de remocao de todos objetos edge associados ao objeto node
+            Método de remoção de todos objetos Edge associados ao objeto node.
         '''
+        # Cria uma lista vazia que irá receber as Edges removidas.
         deleted_list = []
+        # Varre as edges do Node.
         for edge in self.edges:
+            # Como todas as edges serão removidas, adiciona cada uma à
+            # "deleted_list".
             deleted_list.append(edge)
-            # self.scene().removeItem(edge.GhostRetItem)
+            # Remove a Edge da cena em que o Node se encontra.
             self.scene().removeItem(edge)
 
         for edge in deleted_list:
+            # Como cada edge removida possui um outro item conectado além do
+            # Node presente, precisamos removê-la também da lista de edges.
+            # deste outro item.
             if edge.w1 is not None:
                 edge.w1.remove_edge(edge)
-                # if edge.w1.myItemType == Node.NoConectivo and len(edge.w1.edges) <= 1:
-                #     self.scene().removeItem(edge.w1)
             if edge.w2 is not None:
                 edge.w2.remove_edge(edge)
-                # if edge.w2.myItemType == Node.NoConectivo and len(edge.w2.edges) <= 1:
-                #     self.scene().removeItem(edge.w2)
 
+        # Limpa a lista de edges do presente Node, assim como a lista de edges
+        # que não são conectadas à subestações.
         self.edges.clear()
         self.edges_no_sub.clear()
+        # Atualiza o contador que acompanha o número de edges associadas ao
+        # item.
         self.update_count()
 
     def remove_edge(self, edge):
-        scene = self.scene()
+        '''
+            Esta função remove a edge passada na chamada do item presente.
+        '''
         self.edges.pop(edge)
-        # scene.removeItem(edge)
         self.update_count()
 
     def add_edge(self, edge):
         '''
-            Metodo de adicao de objetos edge associados ao objeto node
+            Método de adição de objetos edge associados ao objeto node
         '''
+        # Se o Node for um religador, este só pode ter no máximo 2 ligações.
+        # Ou seja, se o contador que acompanha o número de edges do Node for
+        # maior que 2, a função retorna.
         if self.myItemType == self.Religador:
             if self.edge_counter > 2:
                 return
+        # Incrementa o contador.
             self.edge_counter += 1
+        # Adiciona a Edge passada na chamada da função para o dicionário de
+        # Edges do Node.
         self.edges[edge] = len(self.edges)
-
-        if edge.w1.myItemType != Node.Subestacao and edge.w2.myItemType != Node.Subestacao:
+        # Se o presente Node não for uma subestação, adiciona a Edge no
+        # dicionário de edges que não se conectam a subestações.
+        if (edge.w1.myItemType != Node.Subestacao
+                and edge.w2.myItemType != Node.Subestacao):
             self.edges_no_sub[edge] = len(self.edges_no_sub)
         self.update_count()
 
     def edge_position(self, edge):
-
+        '''
+            Este método é utilizado da distribuição das Edges ligadas numa
+            barra, seguindo uma lógica de alinhamento.
+        '''
+        # PEDIR PARA O LUCAS EXPLICAR
         height = self.rect().height()
         height = height - 2.0 * height / 8.0
 
@@ -500,10 +534,13 @@ class Node(QtGui.QGraphicsRectItem):
         return pos
 
     def center(self):
+        '''
+            Método que retorna o centro do objeto passado.
+        '''
         point = QtCore.QPointF(self.rect().width(), self.rect().height())
         return (self.pos() + point / 2)
 
-    def setCenter(self, pos):
+    def set_center(self, pos):
         w = self.rect().width()
         h = self.rect().height()
         point = QtCore.QPointF(w / 2, h / 2)
@@ -511,51 +548,61 @@ class Node(QtGui.QGraphicsRectItem):
 
     def boundingRect(self):
         '''
-            Metodo que especifica a borda do objeto node
+            Reimplementação da função virtual que especifica a borda do objeto
+            node (ver biblioteca Pyside, QtGui.QGraphicsRectItem.boundingRect)
         '''
         extra = 5.0
         return self.rect().adjusted(-extra, -extra, extra, extra)
 
     def paint(self, painter, option, widget):
         '''
-            Metodo de desenho do objeto node implementado pela classe Node
+            Método de desenho do objeto node implementado pela classe Node.
+            Aqui se diferencia os objetos pela sua forma. Todos eram definidos
+            por um retângulo QtCore.QRectF. Neste método, serão desenhadas
+            suas formas baseadas em seus retângulos.
+            Ver método paint em PySide.
         '''
-
-        # self.text.setPos(0, self.rect().height())
-        # caso o item a ser inserido seja do tipo subestacao
+        # Caso o item a ser inserido seja do tipo subestacão:
         if self.myItemType == self.Subestacao:
             painter.setPen(QtGui.QPen(QtCore.Qt.black, 2))
             painter.setBrush(QtCore.Qt.white)
             painter.drawEllipse(self.rect())
-        # caso o item a ser inserido seja do tipo religador1
+        # Caso o item a ser inserido seja do tipo religador:
         elif self.myItemType == self.Religador:
             painter.setPen(QtGui.QPen(QtCore.Qt.black, 2))
+            # Faz-se aqui importante observação: se a chave associada ao
+            # elemento gráfico religador estiver fechada, desenha-se o
+            # religador preenchido de preto. Caso contrário, ele é vazado
+            # (branco)
             if self.chave.normalOpen == 1:
                 painter.setBrush(QtCore.Qt.white)
             else:
                 painter.setBrush(QtCore.Qt.black)
             painter.drawRoundedRect(self.rect(), 5, 5)
-        # caso o item a ser inserido seja do tipo barra
+        # Caso o item a ser inserido seja do tipo barra:
         elif self.myItemType == self.Barra:
             painter.setPen(QtGui.QPen(QtCore.Qt.black, 2))
             painter.setBrush(QtCore.Qt.black)
             painter.drawRoundedRect(self.rect(), 2, 2)
-        # caso o item a ser inserido seja do tipo agent
+        # Caso o item a ser inserido seja do tipo agente:
         elif self.myItemType == self.Agent:
             painter.setPen(QtGui.QPen(QtCore.Qt.black, 2))
             painter.setBrush(QtCore.Qt.white)
             painter.drawRect(self.rect())
-        # caso o item a ser inserido seja do tipo nó conectivo
+        # Caso o item a ser inserido seja do tipo nó conectivo:
         elif self.myItemType == self.NoConectivo:
             painter.setPen(QtGui.QPen(QtCore.Qt.black, 2))
             painter.setBrush(QtCore.Qt.black)
             painter.drawEllipse(self.rect())
 
+        # Caso o item a ser inserido seja do tipo nó de carga:
         elif self.myItemType == self.NoDeCarga:
             painter.setPen(QtGui.QPen(QtCore.Qt.black, 2))
             painter.setBrush(QtCore.Qt.black)
             painter.drawRect(self.rect())
 
+        # Se o item estiver selecionado, desenha uma caixa pontilhada de
+        # seleção em seu redor.
         if self.isSelected():
             painter.setPen(QtGui.QPen(QtCore.Qt.red, 2, QtCore.Qt.DashLine))
             painter.setBrush(QtCore.Qt.NoBrush)
@@ -565,67 +612,80 @@ class Node(QtGui.QGraphicsRectItem):
 
     def itemChange(self, change, value):
         '''
-            Metodo que detecta mudancas na posicao do objeto node
+            Método que detecta mudancas na posição do objeto Node
         '''
+        # Se a mudança for posição (ver QtGui.QGraphicsItem.ItemPositionChange)
+        # é preciso atualizar as edges deste Node uma a uma:
         if change == QtGui.QGraphicsItem.ItemPositionChange:
             for edge in self.edges:
                 edge.update_position()
+        # Condição interna de retorno necessária.
         return QtGui.QGraphicsItem.itemChange(self, change, value)
 
     def mousePressEvent(self, mouse_event):
-        print len(self.edges)
+        '''
+            Reimplementação da função virtual que define o evento referente
+            ao aperto de botão do mouse.
+        '''
+        # Armazena a cena do item
         self.cena = self.scene()
-        self.mouse_event_ref_x = mouse_event.scenePos().x()
-        self.mouse_event_ref_y = mouse_event.scenePos().y()
-        self.line_ref_x = QtCore.QLineF(QtCore.QPointF(self.pos().x() -150, self.pos().y() + 20), QtCore.QPointF(self.pos().x() + 190, self.pos().y() + 20))
-        self.line_ref_y = QtCore.QLineF(QtCore.QPointF(self.pos().x() +20 , self.pos().y() -150), QtCore.QPointF(self.pos().x() + 20, self.pos().y() + 190  ))
-        # self.line_final_x = DashedLine()
-        # self.line_final_y = DashedLine()
-        # self.line_final_x.setLine(self.line_ref_x)
-        # self.line_final_y.setLine(self.line_ref_y)
-        self.pressed = True
-        
-
-        # self.scene().addItem(self.line_final_x)
+        # "Deseleciona" os outros itens que por ventura estejam selecionados.
         self.scene().clearSelection()
-        # print "Id:", self.chave.nome, ",", "Corrente Nominal:", self.chave.ratedCurrent, ",", "Breaking Capacity:", self.chave.breakingCapacity, ",", "Seq de Religamento", self.chave.recloseSequences
+        # Aciona a flag interna do item que indica que o item está selecionado.
         self.setSelected(True)
         super(Node, self).mousePressEvent(mouse_event)
         return
 
     def mouseMoveEvent(self, mouse_event):
-        super(Node,self).mouseMoveEvent(mouse_event)
-        
-
+        '''
+            Reimplementação da função virtual que define o evento referente
+            ao movimento do mouse durante o aperto.
+        '''
+        super(Node, self).mouseMoveEvent(mouse_event)
+        # Chama a função "adjust_in_grid", que limita o movimento dos itens
+        # numa grade invisível presente no diagrama (ver adjust_in_grid na
+        # class node).
         self.setPos(self.adjust_in_grid(self.scenePos()))
-        
-        
-
 
     def mouseReleaseEvent(self, mouse_event):
-        if self.pressed:
-            pass
-        else:
-            self.collider_counter = 0
-            self.lock_h = False
-            if self.line_final_x.scene() != None:
-                self.scene().removeItem(self.line_final_x)
-            if self.line_final_y.scene() != None:
-                self.scene().removeItem(self.line_final_y)
+        '''
+            Reimplementação da função virtual que define o evento referente
+            ao soltar do botão mouse após aperto.
+        '''
         super(Node, self).mouseReleaseEvent(mouse_event)
+        # Cria uma edge None para auxílio na execução.
         new_edge = None
         scene = self.scene()
+        # Cria um elemento gráfico do tipo elipse, com tamanho definido pelo
+        # retângulo QtCore.QRectF. Este elipse é adicionado na posição em que o
+        # botão foi solto. Este elipse precisa ser removido ao final da função,
+        # caso contrário ele ficará visível na cena.
         ell = QtGui.QGraphicsEllipseItem()
-        ell.setRect(QtCore.QRectF(mouse_event.scenePos() - QtCore.QPointF(10,10), QtCore.QSizeF(30,30)))
+        ell.setRect(
+            QtCore.QRectF(
+                mouse_event.scenePos() - QtCore.QPointF(10, 10),
+                QtCore.QSizeF(30, 30)))
         scene.addItem(ell)
+
+        # O trecho a seguir implementa o caráter "Sticky" do nó conectivo.
+        # Explicando: Se o nó só tiver uma extremidade ocupada e colidir com
+        # um node que não seja outro nó conectivo, a linha "gruda" no item
+        # colidido, estabelecendo uma ligação.
         if self.myItemType == Node.NoConectivo and len(self.edges) == 1:
+            # Varre todos os itens que foram colididos com o elipse criado.
+            # Isto permite que haja uma margem de colisão ao redor do nó.
             for item in scene.items():
                 if ell.collidesWithItem(item):
                     if isinstance(item, Node):
                         if item.myItemType != Node.NoConectivo:
+                            # Se o item for uma barra, ainda é preciso tratar
+                            # o algoritmo! PENDÊNCIA.
                             if item.myItemType == Node.Barra:
                                 scene.removeItem(ell)
                                 return
+                            # Não sendo o item uma barra, remove-se a linha
+                            # do nó conectivo, e cria uma nova linha se liga
+                            # diretamente ao item colidido.
                             for edge in self.edges:
                                 edge.scene().removeItem(edge)
                                 if edge.w1.myItemType != Node.NoConectivo:
@@ -636,46 +696,83 @@ class Node(QtGui.QGraphicsRectItem):
                                 scene.addItem(new_edge)
                                 new_edge.update_position()
                                 scene.removeItem(self)
-
-
+        # Caso o item seja um Nó de Carga e não esteja conectado ainda, este
+        # trecho do método implementa a característica "Sticky" do Nó de Carga
+        # quando ele colide com uma linha.
         if self.myItemType == Node.NoDeCarga:
+            # Se o Nó de Carga já estiver conectado, a função retorna.
             if len(self.edges) != 0:
                 scene.removeItem(ell)
                 return
             scene.removeItem(ell)
             if self.scene().myMode == 1:
                 return
+                # Se algum item da cena colidir com o elipse e este item não
+                # for o próprio nó de carga, quebra a linha e adiciona o nó
+                # de carga. Se o comprimento da linha for muito pequeno, isto
+                # não é feito.
             for item in scene.items():
-                if self.collidesWithItem(item):
-                    print item
+                if ell.collidesWithItem(item):
                     if isinstance(item, Edge) and not item.isUnderMouse():
                         if item.line().length() < 20:
                             return
                         break_mode = 3
                         pos = item.get_fraction(mouse_event.scenePos())
-                        self.setPos(pos.x()-5, pos.y()-5)
+                        self.setPos(pos.x() - 5, pos.y() - 5)
                         scene.break_edge(item, break_mode, None, self)
 
         scene.removeItem(ell)
         return
 
     def mouseDoubleClickEvent(self, event):
+        '''
+            Reimplementação da função de duplo clique do mouse.
+        '''
+        # Limpa a seleção de qualquer objeto na cena.
         self.scene().clearSelection()
+        # Seta o item como selecionado.
         self.setSelected(True)
         super(Node, self).mouseDoubleClickEvent(event)
+        # Executa o Dialog de configuração dos elementos do Node.
         self.scene().launch_dialog()
 
-    def adjust_in_grid(self,pos):
+    def adjust_in_grid(self, pos):
+        '''
+            Este método implementa uma grade invisível na cena, que limita o
+            movimento dos Nodes para posições bem definidas.
+        '''
+        # Seta uma flag que indica que este item foi ajustado.
         self.adjusted = True
-        item_x = pos.x()-5
-        item_y = pos.y()-5
-        if item_x ==0 or item_y ==0:
+        # Ajuste de posição empírico
+        item_x = pos.x() - 5
+        item_y = pos.y() - 5
+        if item_x == 0 or item_y == 0:
             return
-        centena_x = int(item_x/100)*100
-        centena_y = int(item_y/100)*100
+        # Isola a centena da posição x e y do item, e.g se a posição x for
+        # 384, centena_x = int(384/100) * 100 = 3 * 100. Todo o exemplo é aná-
+        # logo para a posição y.
+        centena_x = int(item_x / 100) * 100
+        centena_y = int(item_y / 100) * 100
+        # Calcula os residuais, que é a dezena+unidade. No nosso exemplo,
+        # residual_x = 384 - 300 = 84
         residual_x = item_x - centena_x
         residual_y = item_y - centena_y
-        
+        # A posição de referência para a grade é a 0,0. Assim, definiu-se que
+        # cada quadrado da grade possui 20x20 pixels. Sendo assim, o residual
+        # calculado irá nos mostrar em que quadrado o item precisa ser
+        # ajustado. No nosso exemplo, temos x = 384. Então a posição x deve
+        # ser ajustada para 380, que se encontra no quadrado que compreende
+        # 380 -> 400. Segue-se a seguinte regra:
+        #  0 < residual < 10  -> Posição final = centena
+        # 10 < residual < 20  -> Posição final = centena + 20
+        # 20 < residual < 30  -> Posição final = centena + 20
+        # 30 < residual < 40  -> Posição final = centena + 40
+        # 40 < residual < 50  -> Posição final = centena + 40
+        # 50 < residual < 60  -> Posição final = centena + 60
+        # 60 < residual < 70  -> Posição final = centena + 60
+        # 70 < residual < 80  -> Posição final = centena + 80
+        # 80 < residual < 90  -> Posição final = centena + 80
+        #      residual > 90  -> Posição final = centena + 100
 
         if residual_x > 10:
             if residual_x > 20:
@@ -730,17 +827,23 @@ class Node(QtGui.QGraphicsRectItem):
                 new_pos_y = centena_y + 100
             else:
                 new_pos_y = centena_y + 80
-
+        # Ajuste de posição devido à diferença de geometria.
         if self.myItemType == Node.NoDeCarga:
             new_pos_x += 6
             new_pos_y += 6
-
-        return QtCore.QPointF(new_pos_x,new_pos_y)
+        return QtCore.QPointF(new_pos_x, new_pos_y)
 
     def contextMenuEvent(self, event):
-            self.scene().clearSelection()
-            self.setSelected(True)
-            self.myNodeMenu.exec_(event.screenPos())        
+        '''
+            Método que reimplementa a função virtual do menu aberto pelo clique
+            com botão direito.
+        '''
+        # Limpa a seleção dos itens da cena.
+        self.scene().clearSelection()
+        # Seta a flag do item como selecionado.
+        self.setSelected(True)
+        # Executa o menu, dependendo do tipo de item.
+        self.myNodeMenu.exec_(event.screenPos())
 
 
 class SceneWidget(QtGui.QGraphicsScene):
@@ -1592,16 +1695,16 @@ class SceneWidget(QtGui.QGraphicsScene):
                         w2_is_locked = True
                 if w1_is_locked and not w2_is_locked:
                     pos = QtCore.QPointF(item.w2.center().x(), item.w1.center().y())
-                    item.w2.setCenter(pos)
+                    item.w2.set_center(pos)
                     item.update_position()
                 if w2_is_locked and not w1_is_locked:
                     pos = QtCore.QPointF(item.w1.center().x(), item.w2.center().y())
-                    item.w1.setCenter(pos)
+                    item.w1.set_center(pos)
                     item.update_position()
 
                 else:
                     pos = QtCore.QPointF(item.w2.center().x(), item.w1.center().y())
-                    item.w2.setCenter(pos)
+                    item.w2.set_center(pos)
                     item.update_position()
         for item in self.items():
             if isinstance(item, Edge):
@@ -1612,10 +1715,10 @@ class SceneWidget(QtGui.QGraphicsScene):
             if isinstance(item, Edge):
                 if item.w1.x() < item.w2.x():
                     pos = QtCore.QPointF(item.w1.center().x(), item.w2.center().y())
-                    item.w2.setCenter(pos)
+                    item.w2.set_center(pos)
                 else:
                     pos = QtCore.QPointF(item.w2.center().x(), item.w1.center().y())
-                    item.w1.setCenter(pos)
+                    item.w1.set_center(pos)
                 item.update_position()
                 item.update_ret()
 
