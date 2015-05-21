@@ -19,7 +19,6 @@ class Bridge(object):
 
         cim_path = cim_path
         self.xml_cim = BeautifulSoup(open(cim_path))
-        #print self.xml_cim.prettify()
         xml_rnp = BeautifulSoup()
         tag_rede = xml_rnp.new_tag("rede")
         tag_elementos = xml_rnp.new_tag("elementos")
@@ -35,8 +34,6 @@ class Bridge(object):
             mrid = breaker.find('mrid').text
             nome = str(mrid)[10:18]
             estado = str(breaker.find('normalopen').text)[3]
-            print "ESTADO"
-            print estado
             if estado == '1':
                 estado = "aberto"
             else:
@@ -87,6 +84,7 @@ class Bridge(object):
 
         # Representação de todos os trechos
         self.trechos_min = []
+        self.trechos_min2 = []
 
         for trecho in self.xml_cim.findAll("conductor"):
             trecho.nos = []
@@ -103,6 +101,7 @@ class Bridge(object):
             trecho_tag.append(comprimento)
             if float(trecho.find('length').text) == 0.01:
                 self.trechos_min.append(trecho)
+                self.trechos_min2.append(trecho)
             tag_elementos.append(trecho_tag)
 
             
@@ -182,12 +181,9 @@ class Bridge(object):
             tag_elementos.append(transformador_tag)
             tag_elementos.append(substation_tag)
 
-        print "--------------------------------------------------------------------------------"
-        print "VIZINHANÇAS"
         self.lista_barras = []
         self.lista_nos_de_carga = self.xml_cim.findAll('energyconsumer')
         
-        print "VIZINHOS: "
         for no in self.lista_nos_de_carga:
             (vizinhos, chaves) = self.definir_vizinhos(no, 0)
             no.vizinhos = vizinhos
@@ -253,9 +249,6 @@ class Bridge(object):
 
 
         for setor in setores:
-            print "SETOR"
-            print setor.nome
-
             setor.vizinhos =[]
 
             setor_tag = xml_rnp.new_tag("setor")
@@ -269,7 +262,6 @@ class Bridge(object):
             chave.setores = []
 
         for no in self.lista_nos_de_carga:
-            print str(no.find('label').text)
             for no2 in no.vizinhos:
                 if no.setor != no2.setor:
                     no.setor.vizinhos.append(no2.setor)
@@ -322,6 +314,7 @@ class Bridge(object):
 
 
         for trecho in self.xml_cim.findAll("conductor"):
+            
             if len(trecho.nos) != 0:
                 tag_elemento_trecho = xml_rnp.new_tag("elemento")
                 tag_elemento_trecho["nome"] = str(trecho.find('mrid').text)[10:18]
@@ -360,26 +353,26 @@ class Bridge(object):
 
         for setor in setores:
             setor.breakers = []
-            print "SETOR " + str(setor.nome)
             for breaker in setor.breakers:
-                print str(breaker.find('mrid').text)[10:18]
                 if breaker.name == "busbarsection":
                     setor.setores = []
 
         setores_conectados = []
         for breaker in self.xml_cim.findAll('breaker'):
             breaker.setores = []
-            print "NOS DO BREAKER " + str(breaker.find('mrid').text)[10:18]
             for no in breaker.nos:
-                print str(no.find("label").text)[3:5]
                 breaker.setores.append(no.setor)
-            for setor in breaker.setores:
-                print setor.nome
             estado = str(breaker.find('normalopen').text)[3]
             breaker.setores[0].breakers.append(breaker)
             breaker.setores[1].breakers.append(breaker)
 
         alimentadores = self.definir_alimentadores()
+
+        for alimentador in alimentadores:
+            tag_alimentador = xml_rnp.new_tag("alimentador")
+            tag_alimentador["nome"] = str(id(alimentador))
+            tag_elementos.append(tag_alimentador)
+
 
 
         # Primeiramente se resolvem as pendências no XML que necessitavam da definição
@@ -390,7 +383,6 @@ class Bridge(object):
         alimentadores_aux = list(alimentadores)
         for breaker in self.xml_cim.findAll("breaker"):
             if self.detectar_barra(breaker).name == "busbarsection":
-                raw_input("AA")
                 tag_no = xml_rnp.new_tag("no")
 
                 potencia_ativa = 0
@@ -399,7 +391,6 @@ class Bridge(object):
                 for alimentador in alimentadores:
                     if alimentador[0].nome == breaker.setores[0].nome or alimentador[0].nome == breaker.setores[1].nome:
                         no = alimentador[0]
-                        print "chegou"
 
                 
                 tag_no["nome"] = no.nome
@@ -425,11 +416,14 @@ class Bridge(object):
         # Adiciona os trechos que conectam barras e religadores. Por serem uma exceção,
         # eles necessitavam da definição dos alimentadores antes.
         for breaker in self.xml_cim.findAll("breaker"):
-            if self.detectar_barra(breaker).name == "busbarsection":
-                if len(self.trechos_min) > 0:
-                    trecho = self.trechos_min.pop()
-                if trecho is None:
-                    continue
+            barra = self.detectar_barra(breaker)
+            if barra.name == "busbarsection":
+                raw_input("antes")
+                trecho = self.trechos_min.pop()
+                print trecho.nos
+                trecho.nos.append(breaker)
+                trecho.nos.append(barra)
+                
                 tag_elemento_trecho = xml_rnp.new_tag("elemento")
                 tag_elemento_trecho["nome"] = str(trecho.find('mrid').text)[10:18]
                 tag_elemento_trecho["tipo"] = "trecho"
@@ -465,8 +459,6 @@ class Bridge(object):
                 if estado == '0':
                     lista_duplas.append(breaker.setores)
 
-            print "ALIMENTADOR X"
-            print alimentador[0].nome
             trechos = []
             breakers = []
             breakers_remova = []
@@ -492,16 +484,12 @@ class Bridge(object):
                 breakers = breakers + list(setor.breakers)
 
                 for trecho in self.xml_cim.findAll("conductor"):
-                    print "ANALISE DO TRECHO"
                     for no in trecho.nos:
                         if no.name == "breaker":
-                            print str(no.find('mrid').text)
                             estado = str(no.find('normalopen').text)[3]
-                            item = self.detectar_barra(no)
-                            #if item.name == "busbarsection":
                                 
                             for setor2 in no.setores:
-                                if setor2.nome == setor.nome and estado == '0':
+                                if setor2.nome == setor.nome and estado == '0' and setor2.nome != alimentador[0].nome:
                                     
                                     trechos.append(trecho)
 
@@ -509,9 +497,8 @@ class Bridge(object):
                             if no.setor.nome == setor.nome:
                                 trechos.append(trecho)
 
-                        if no.name == "busbarsection":
-                            print "OPA"
-                            trechos.append(trecho)
+                        # if no.name == "busbarsection":
+                        #     trechos.append(trecho)
             trechos = set(trechos)
 
             #breakers = set(breakers)
@@ -532,22 +519,16 @@ class Bridge(object):
             for breaker in breakers:
                 trigger = 0
 
-                print "SEGUNDA VARREDURA"
                 for alimentador2 in alimentadores:
-                    print "ALIMENTADOR 2"
                     if alimentador2 == alimentador:
                         continue
                     else:
-                        print alimentador2[0].nome
                         for setor in alimentador2:
                             if breaker.setores[0] == setor or breaker.setores[1] == setor:
                                 trigger += 1
                                 if trigger > 1:
 
                                     breakers_remova.append(breaker)
-                                    print "BREAKER A SE REMOVER"
-                                    print breaker.setores[0].nome
-                                    print breaker.setores[1].nome
                                     trigger = 0
 
 
@@ -566,16 +547,6 @@ class Bridge(object):
                 tag_elemento_trecho["nome"] = str(trecho.find("mrid").text)[10:18]
                 tag_elemento_trechos.append(tag_elemento_trecho)
 
-                print "trecho adicionado:"
-                print str(trecho.find('mrid').text)
-                for no in trecho.nos:
-                    if no.name == "breaker":
-                        print str(no.find('mrid').text)
-                    if no.name == "energyconsumer":
-                        print str(no.find('label').text)
-                    if no.name == "busbarsection":
-                        print str(no.find('mrid').text)
-
 
 
             subestacoes = []
@@ -590,8 +561,6 @@ class Bridge(object):
         for alimentador in alimentadores:
             alimentador[0].usado = False
         for alimentador in alimentadores:
-            print "ALIMENTADOR"
-            print alimentador[1].nome
             dupla = []
             al = lista_auxiliar.pop(0)
             if al[0].usado:
@@ -600,10 +569,7 @@ class Bridge(object):
                 dupla.append(al)
                 al[0].usado = True
             for alimentador2 in lista_auxiliar:
-                print "AUXILIAR"
-                print alimentador2[1].nome
                 if alimentador2[0].nome == alimentador[0].nome:
-                    print "APPEND"
                     dupla.append(alimentador2)
             if len(dupla) > 0:
                 sub = lista_subestacoes.pop(0)
@@ -681,7 +647,7 @@ class Bridge(object):
         
 
         self.xml_final = xml_rnp
-        self.save_file(cim_path + '_convertido')
+        self.save_file('home/mateus/Desktop/rede2CIM')
 
 
 
@@ -699,22 +665,9 @@ class Bridge(object):
                 alimentadores.append(duplas_raiz)
             elif estado == '0':
                 lista_duplas.append(breaker.setores)
-        for alimentador in alimentadores:
-            print "Alimentador:"
-            for setor in alimentador:
-                print setor.nome
-        #dupla_raiz = duplas_raiz[0]
-        
-
-        print len(self.xml_cim.findAll('breaker'))
-        print len(lista_duplas)
-        #lista_duplas = set(lista_duplas)
-              
+             
 
         for alimentador in alimentadores:
-            print "ALIMENTADOR EM USO"
-            for setor in alimentador:
-                print setor.nome
             for setor in alimentador:
                 if setor == alimentador[0]:
                     continue
@@ -722,12 +675,8 @@ class Bridge(object):
             fim = False
             lista_achados =[]
             while (fim is False):
-                print "SETOR COMP"
-                print setor_raiz.nome
+
                 for dupla in lista_duplas:
-                    print "DUPLA"
-                    print dupla[0].nome
-                    print dupla[1].nome
                     if setor_raiz.nome == dupla[0].nome:
                         if self.pertence_a_lista(alimentador, dupla[1]) == False:
                             alimentador.append(dupla[1])
@@ -738,9 +687,6 @@ class Bridge(object):
                             alimentador.append(dupla[0])
                             lista_achados.append(dupla[0])
                             continue
-                print "UPDATe"
-                for setor in alimentador:
-                    print setor.nome
                 if len(lista_achados) > 0:
                     
                     setor_raiz = lista_achados.pop(0)
@@ -806,7 +752,6 @@ class Bridge(object):
 
     def no_setor(self, no, setor):
         if setor.nos == []:
-            print "False"
             return False
         for item in setor.nos:
             if no == item:
@@ -1064,8 +1009,7 @@ class Bridge(object):
             reset_counter = 0
             if no_raiz_rot.name == "breaker":
                 self.nos_percorridos.append(no_raiz_rot)
-                if self.religador_usado(no_raiz_rot) == True:
-                    print "Religador usado anteriormente, redefinindo..."                    
+                if self.religador_usado(no_raiz_rot) == True:                  
                     no_raiz = self.lista_religadores_nao_usados.pop(0)
                     no_raiz_rot = no_raiz
                     no_raiz_antigo = no_raiz
@@ -1073,18 +1017,10 @@ class Bridge(object):
 
             if no_raiz_rot.name != "breaker":
                 no_raiz_rot.counter += 1
-            print "Nó raiz: " + str(no_raiz_rot.name)
-            if no_raiz_rot.name == "breaker":
-                print "ID: " + str(no_raiz_rot.find('mrid'))
-            if no_raiz_rot.name == "energyconsumer":
-                print "Label: " + str(no_raiz_rot.find('label'))
-            print "Tracking Number: " + str(no_raiz_rot.counter)
-            print "Reference Number: " + str(no_raiz_rot.number)
             #print "Numero de Terminais: "
             count = 1
             # Loop geral: Varre todos os terminais do nó raiz
             for terminal in no_raiz_rot.findAll('terminal'):
-                print "Contador Interno: " + str(count)
                 count = count + 1
                 if no_raiz_rot.counter == no_raiz_rot.number:
                     no_raiz_rot = no_raiz
@@ -1105,7 +1041,6 @@ class Bridge(object):
                         # Chama a função que acha a que tipo de nó pertence o terminal conectado
                         # e.g Religador, Barra, Nó de Carga.
                         parent_conexao = self.achar_parent(conexao)
-                        print "Nó Vizinho: " + str(parent_conexao.name)
                         # print parent_conexao
                         # Analisa os casos possíveis
                         if parent_conexao.name == 'busbarsection':
@@ -1119,7 +1054,6 @@ class Bridge(object):
                         # Se o item conectado ao nó raiz for um condutor, obviamente existe um nó
                         # em seguida. Precisa-se achar e identificar este nó.
                         if parent_conexao.name == 'conductor':
-                            print "Condutor ID:" + str(parent_conexao.find('mrid'))
                         # Varre todos os terminais (2) do condutor, excetuando-se o próprio terminal
                         # analisado (primeiro extremo do condutor). O objetivo é encontrar o terminal
                         # referente ao segundo extremo do condutor.
@@ -1141,54 +1075,35 @@ class Bridge(object):
                                         # print "Terminal do No:" + str(conexao2.find('mrid'))
                                         if conexao2.find('mrid') != no.find('mrid'):
                                             parent_conexao2 = self.achar_parent(conexao2)
-                                            print "Nó Final: " + str(parent_conexao2.name)
-                                            if parent_conexao2.name == "breaker":
-                                                print "ID: " + str(parent_conexao2.find('mrid'))
-                                            if parent_conexao2.name == "energyconsumer":
-                                                print "Label: " + str(parent_conexao2.find('label'))
-                                            print "Tracking Number: " + str(parent_conexao2.counter)
-                                            print "Reference Number: " + str(parent_conexao2.number)
-
                 else:
                     
                     if parent_conexao.name == 'conductor':
-                        print "CheckPoint."
                         if self.trecho_pertence(parent_conexao, no_raiz_rot) == False:
                             parent_conexao.nos.append(no_raiz_rot)
                         if self.trecho_pertence(parent_conexao, parent_conexao2) == False:
                             parent_conexao.nos.append(parent_conexao2)
                     if parent_conexao2 == no_raiz_antigo:
-                        print "tentou voltar pro nó antigo!!"
                         if no_raiz_rot.counter ==  no_raiz_rot.number:
-                            print "e esse era o único nó a qual ele podia voltar!"
                             no_raiz_antigo = no_raiz
                             no_raiz_rot = no_raiz
                             break
                         else:
-                            print "vejamos o pŕoximo nó então"
                             continue
 
                     if parent_conexao2.name == "energyconsumer":
 
 
                         if self.no_percorrido(parent_conexao2) == True:
-                            print "Energy Consumer pertence a outro setor!"
                             reset_counter += 1
                             continue
                         else:
-                            print "Energy Consumer não pertence a nenhum outro setor!"
                             if self.no_setor(parent_conexao2, setor) == False:
                                 setor.nos.append(parent_conexao2)
                             if self.no_raiz(parent_conexao2) == True and parent_conexao2.counter == parent_conexao2.number:
-                                print "proibido"
-                                if no_raiz_rot == no_raiz:
-                                    print "fim do setor"
-                                    
+                                if no_raiz_rot == no_raiz:                                    
                                     setores.append(setor)
                                     for setor in setores:
-                                        print "SETOR: "
                                         for item in setor.nos:
-                                            print str(item.find('label').text)
                                             item.setor = setor
                                     self.lista_religadores_usados.append(no_raiz)
                                     for elemento in setor.nos:
@@ -1200,7 +1115,6 @@ class Bridge(object):
                                 else:
                                     continue
                             else:
-                                print "Será o novo nó raiz"
                                 
                                 no_raiz_antigo = no_raiz_rot
                                 no_raiz_rot = parent_conexao2
@@ -1212,13 +1126,11 @@ class Bridge(object):
                         # no_raiz_rot = parent_conexao2
                     elif parent_conexao2.name == "breaker":
                         if self.no_percorrido(parent_conexao2) == True:
-                            print "percorrido!"
                             break_sign = False
                             continue
                             
                         else:
                             self.nos_percorridos.append(parent_conexao2)
-                            print "marcado como percorrido."
                             #self.lista_religadores_nao_usados.append(parent_conexao2)
                             
                             no_counter = no_raiz_rot.counter
@@ -1236,11 +1148,9 @@ class Bridge(object):
                                                         
                                                     # setores.append(setor)
                 continue   
-            print "fim?"
-            print reset_counter                                 # setor = Setor()
+
             if reset_counter == 2:
                 if len(self.lista_religadores_nao_usados) > 1:
-                    print "HEY"
                     no_raiz = self.lista_religadores_nao_usados.pop(0)
                     no_raiz_rot = no_raiz
                     no_raiz_antigo = no_raiz
@@ -1248,23 +1158,14 @@ class Bridge(object):
                 else:
                     fim = True
 
-                     
-            print "--------------------------------------------------------------------------"
-
-
-                #print parent.name
         counting = 0
         for item in self.nos_percorridos:
             counting += 1
-        # print counting
-        # print self.lista_religadores_nao_usados
+
 
         for setor in setores:
             for item in setor.nos:
-                #print str(item.find('label').text)
-                #print len(str(item.find('label').text))
                 setor.nome = str(item.find('label').text)[3]
-            print setor.nome
 
         return setores
 
@@ -1284,12 +1185,12 @@ class Bridge(object):
 
 
     def save_file(self, path):
-        f = open(path, 'w')
+        f = open('/home/mateus/Desktop/xml_rnp', 'w')
         f.write(self.xml_final.prettify(formatter = "xml"))
 
         
 
-bridge = Bridge("/home/mateus/Redes de Teste/rede02_CIM")
+bridge = Bridge("/home/mateus/Redes de Teste/rede01_CIM")
 #print bridge.xml_final.prettify()
             
 

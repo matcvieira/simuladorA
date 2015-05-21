@@ -3,37 +3,17 @@
 from PySide import QtCore, QtGui
 import math
 import sys
-from elementos import Religador, BusBarSection, Substation, Terminal, Condutor, NoConect, EnergyConsumer
+# Importa os módulos necessários para implementação do diagrama gráfico
+from elementos import Religador, BusBarSection, Substation, Condutor
+from elementos import EnergyConsumer
 from DialogRecloser import RecloserDialog
-from DialogLine import LineDialog
 from DialogBarra import BarraDialog
 from DialogConductor import ConductorDialog
 from DialogSubstation import SubstationDialog
 from DialogEnergyConsumer import EnergyConsumerDialog
 from aviso_conexao import AvisoConexaoDialog
 from avisoReligador import AvisoReligador
-from avisoNome import AvisoNome
 
-lista_no_conectivo = []
-
-class DashedLine(QtGui.QGraphicsLineItem):
-
-    def __init__(self):
-
-        super(DashedLine, self).__init__()
-
-    def paint(self, painter, option, widget):
-
-        painter.setPen(QtGui.QPen(QtCore.Qt.red,  # QPen Brush
-                                                    2,  # QPen width
-                                                    QtCore.Qt.DashLine,
-                                                    # QPen style
-                                                    QtCore.Qt.SquareCap,
-                                                    # QPen cap style
-                                                    QtCore.Qt.RoundJoin)
-                       # QPen join style
-                       )
-        painter.drawLine(self.line())  
 
 class Edge(QtGui.QGraphicsLineItem):
     '''
@@ -45,31 +25,45 @@ class Edge(QtGui.QGraphicsLineItem):
             Metodo inicial da classe Edge
             Recebe como parâmetros os objetos Node Inicial e Final
             Define o objeto QtCore.QLineF que define a linha que
-            representa o objeto QtGui.QGraphicsLineItem
+            representa o objeto QtGui.QGraphicsLineItem.
         '''
+        # A class edge representará graficamente os condutores no diagrama.
+        # Nesta classe está presente a sua definição, assim como suas funções
+        # necessárias para alinhamento e ligação.
+        # NOTA IMPORTANTE: A Edge representa gráficamente uma linha. Sendo
+        # assim, ela possui uma linha virtual em que a classe se baseia para
+        # desenhar a linha de fato. Edge é um objeto do tipo
+        # QtGui.QGraphicsLineItem. Sua linha é definida por um objeto do tipo
+        # QtCore.QLineF. (Ver esta duas funções na biblioteca PySide)
         super(Edge, self).__init__()
         self.id = id(self)
         self.w1 = w1
         self.w2 = w2
-        scene = self.scene()
-        self.w1.add_edge(self)  # adiciona o objeto Edge a lista de Edges do
-# objeto w1
-        self.w2.add_edge(self)  # adiciona o objeto Edge a lista de Edges do
-# objeto w2
-
-        # self.terminal1 = Terminal(self)
-        # self.terminal2 = Terminal(self)
-
-        
+        # Adiciona o objeto edge as lista de w1 e w2, respectivamente.
+        self.w1.add_edge(self)
+        self.w2.add_edge(self)
+        # Associa o menu edge a ser passado para abertura de dialog.
         self.myEdgeMenu = edge_menu
+        # Cria e configura a linha que liga os itens w1 e w2.
         line = QtCore.QLineF(self.w1.pos(), self.w2.pos())
         self.setLine(line)
         self.setZValue(-1)
         self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable, True)
+        # Cria uma flag que determina se a edge está ou não fixa a uma barra
         self.isFixed = False
+        # Cria uma flag que fixa a edge numa barra.
         self.fixFlag = False
+        # Cria uma flag que determina se a edge é ou não permanente.
         self.isPermanent = False
-        self.linha = Condutor(0,0,0,0,0,0)
+        # Cria um atributo "linha", que é um objeto do tipo condutor. Este
+        # objeto será utilizado para representar os dados elétricos do
+        # condutor. Os dados são iniciados nulos e depois serão setados por
+        # meio dos menus. Ver classe "Condutor" em elementos.py.
+        self.linha = Condutor(0, 0, 0, 0, 0, 0)
+
+        # Análise: se um item (w1 ou w2) que a linha conecta for uma barra,
+        # seta-se um atributo desta barra, denominado "bar_busy", como True,
+        # indicando que a barra está "ocupada".
         if w1.myItemType == Node.Barra or w2.myItemType == Node.Barra:
             self.isPermanent = True
             if w1.myItemType == Node.Barra:
@@ -78,10 +72,28 @@ class Edge(QtGui.QGraphicsLineItem):
                 w2.bar_busy = True
 
     def get_fraction(self, pos):
-        deltaX = math.fabs(self.line().p2().x() - self.line().p1().x())
-        deltaY = math.fabs(self.line().p2().y() - self.line().p1().y())
+        '''
+            Esta função obtém uma fração da linha e é utilizada durante o
+            modelo que denomino "Sticky to Line" de um nó de carga. Pode ser
+            usado para outros fins em futuras expansões.
+        '''
+        # Define os limites (horizontal e vertical) da linha, ou seja, a
+        # diferença entre os pontos x2 e x1 e os pontos y2 e y1 da linha
+        # (supondo uma linha que liga (x1,y1) a (x2,y2)).
+        delta_x = math.fabs(self.line().p2().x() - self.line().p1().x())
+        delta_y = math.fabs(self.line().p2().y() - self.line().p1().y())
 
-        dist = math.sqrt(pow(pos.x() - self.line().p1().x(), 2) + pow(pos.y() - self.line().p1().y(), 2))
+        # "dist" representa a distância entre o ponto presente na posição
+        # "pos", passada na chamada da função, e o ponto inicial da linha.
+        # Esta distância é dada pela relação matemática que descreve a
+        # distância entre dois pontos:
+        # L = ((x1 - x2)² + (y1 - y2)²)^(1/2)
+        dist = math.sqrt(pow(pos.x() - self.line().p1().x(), 2)
+                         + pow(pos.y() - self.line().p1().y(), 2))
+        # Este é um método de aproximação para uma fração definida. Compara-se
+        # "dist" com o comprimento total da linha. Dependendo da fração obtida
+        # arredonda-se esta fração para os valores definidos de 0.25, 0.5 e
+        # 0.75
         fraction = dist / self.line().length()
         if 0.75 < fraction < 1:
             fraction = 0.75
@@ -91,80 +103,93 @@ class Edge(QtGui.QGraphicsLineItem):
             fraction = 0.25
         if 0 < fraction < 0.25:
             fraction = 0.25
+        # Resta analisar uma possível inconsistência: Se o ponto p1 analisado
+        # acima está abaixo ou acima, à esquerda ou à direita, do ponto p2.
+        # Se estiver à direita:
         if self.line().p1().x() > self.line().p2().x():
-            posf_x = self.line().p1().x() - fraction * deltaX
+            # A posição final x é x1 - fração_obtida * delta_x. Ou seja, x1
+            # será o ponto referência e a posição final x estará a esquerda
+            # deste ponto
+            posf_x = self.line().p1().x() - fraction * delta_x
+        # Se estiver à esquerda:
         else:
-            posf_x = self.line().p1().x() + fraction * deltaX
+            # A posição final x é x1 + fração_obtida * delta_x. Ou seja, x1
+            # será o ponto referência e a posição final x estará à direita
+            # deste ponto.
+            posf_x = self.line().p1().x() + fraction * delta_x
+        # O mesmo é feito para y, sabendo que nos módulos do PySide, o eixo y
+        # incrementa seu valor quando é percorrido para BAIXO. Assim:
+        # Se estiver ABAIXO:
         if self.line().p1().y() > self.line().p2().y():
-            posf_y = self.line().p1().y() - fraction * deltaY
+            # A posição final y é y1 - fração_obtida * delta_y. Ou seja, y1
+            # será o ponto referência e a posição final y estará ACIMA deste
+            # ponto.
+            posf_y = self.line().p1().y() - fraction * delta_y
+        # Se estiver ACIMA:
         else:
-            posf_y = self.line().p1().y() + fraction * deltaY
+            # A posição final y é y1 + fração_obtida * delta_y. Ou seja, y1
+            # será o ponto de referência e a posição final y estará ABAIXO
+            # deste ponto.
+            posf_y = self.line().p1().y() + fraction * delta_y
+        # Finalmente, define e retorna a posição final. Explicando: Se
+        # passarmos uma posição que esteja entre o começo e a metade da linha,
+        # a função retornará a posição que está exatamente em 0.25 da linha.
+        # Caso passemos uma posição que esteja no terceiro quarto da linha,
+        # a função retornará a posição que esteja exatamente na metade da
+        # linha. Passando uma posição que esteja no último quarto da linha, a
+        # função retornará a posição que esteja exatamente em 0.75 da linha.
         posf = QtCore.QPointF(posf_x, posf_y)
 
         return posf
 
     def update_position(self):
         '''
-            Metodo de atualizacao da posicao do objeto edge implementado pela
+            Método de atualização da posição do objeto edge implementado pela
             classe Edge. Sempre que um dos objetos Nodes w1 ou w2 modifica sua
-            posicao este método é chamado para que o objeto edge possa
+            posição este método é chamado para que o objeto edge possa
             acompanhar o movimento dos Objetos Node.
         '''
-        if not self.w1 or not self.w2:
-            return
-
+        # Simplesmente cria uma nova linha ligando os itens w1 e w2.
         line = QtCore.QLineF(self.w1.pos(), self.w2.pos())
         length = line.length()
-
+        # Se o comprimento obtido for nulo, retorna a função e a linha não
+        # será atualizada
         if length == 0.0:
             return
-
+        # Esta função virtual é necessária para realizar mudanças de geometria
+        # em tempo real nos objetos da biblioteca PySide.
         self.prepareGeometryChange()
+        # Seta a linha obtida como linha da Edge.
         self.setLine(line)
-        # self.update_ret()
 
     def set_color(self, color):
+        '''
+            Esta classe simplesmente seta a cor da Edge
+        '''
+        # Com a cor passada na chamada da função, seta a cor desejada.
         self.setPen(QtGui.QPen(color))
-
-    # def drawRec(self):
-    #   self.ret = QtCore.QRectF(0,0,self.line().p2.x() - self.line().p1.x())
-    #   self.ret.setCoords()
-
-    def boundingRect(self):
-        '''
-            Metodo de definicao da borda do objeto edge implementado pela
-            classe Edge.
-        '''
-        extra = (self.pen().width() + 100)
-        p1 = self.line().p1()  # ponto inicial do objeto QtCore.QLineF
-        # associado ao objeto QtGui.QGraphicsLine
-        p2 = self.line().p2()  # ponto final do objeto QtCore.QLineF associado
-        # ao objeto QtGui.QGraphicsLine
-
-        rec = QtCore.QRectF(p1,
-                            QtCore.QSizeF(p2.x() - p1.x(),
-                                          p2.y() - p1.y())).normalized()
-        rec.adjust(-extra, -extra, extra, extra)
-        return rec
 
     def paint(self, painter, option, widget):
         '''
-            Metodo de desenho do objeto edge implementado pela classe Edge
+            Metodo de desenho do objeto edge implementado pela classe Edge.
+            A classe executa esta função constantemente.
         '''
+        # Se os itens colidirem graficamente, a linha não é desenhada.
         if (self.w1.collidesWithItem(self.w2)):
             return
 
-        # if self.w1.myItemType == Node.NoConectivo or self.w2.myItemType == Node.NoConectivo:
-        #     return
+        # Temos abaixo a lógica de distribuição de linhas quando elas são
+        # conectadas a uma barra.
 
-        # Esta é a logica de distribuicao e alinhamento das linhas conectadas
-        # ao item grafico Barra
-
-        # Se o item self.w1 for do tipo barra deve-se alinhar o item self.w2
-        if self.w1.myItemType == Node.Barra and self.w2.myItemType != Node.Subestacao:
+        # Se o item self.w1 for do tipo barra deve-se alinhar o item self.w2.
+        # Note que este alinhamento não se aplica ao elemento Subestação:
+        if (self.w1.myItemType == Node.Barra
+                and self.w2.myItemType != Node.Subestacao):
+            # Seta a flag indicando fixação da linha na Barra.
             self.fixFlag = True
+            # Seta flag de w2, indicando que este item está fixo na barra.
             self.w2.Fixed = True
-            # se o numero de linhas conectas a barra for maior que 1 deve-se
+            # Se o número de linhas conectas a barra for maior que 1 deve-se
             # proceder a logica de distribuicao e alinhamento
             if len(self.w1.edges) > 1:
                 # insere a linha em seu local de distribuicao calculado pelo
@@ -268,6 +293,7 @@ class Edge(QtGui.QGraphicsLineItem):
 
     def mousePressEvent(self, mouse_event):
         self.setSelected(True)
+        #print id(self.linha)
         super(Edge, self).mousePressEvent(mouse_event)
         return
 
@@ -553,10 +579,10 @@ class Node(QtGui.QGraphicsRectItem):
         self.mouse_event_ref_y = mouse_event.scenePos().y()
         self.line_ref_x = QtCore.QLineF(QtCore.QPointF(self.pos().x() -150, self.pos().y() + 20), QtCore.QPointF(self.pos().x() + 190, self.pos().y() + 20))
         self.line_ref_y = QtCore.QLineF(QtCore.QPointF(self.pos().x() +20 , self.pos().y() -150), QtCore.QPointF(self.pos().x() + 20, self.pos().y() + 190  ))
-        self.line_final_x = DashedLine()
-        self.line_final_y = DashedLine()
-        self.line_final_x.setLine(self.line_ref_x)
-        self.line_final_y.setLine(self.line_ref_y)
+        # self.line_final_x = DashedLine()
+        # self.line_final_y = DashedLine()
+        # self.line_final_x.setLine(self.line_ref_x)
+        # self.line_final_y.setLine(self.line_ref_y)
         self.pressed = True
         
 
@@ -769,7 +795,7 @@ class SceneWidget(QtGui.QGraphicsScene):
             mousePress e detectado no diagrama grafico
         '''
         super(SceneWidget, self).mousePressEvent(mouse_event)
-        print mouse_event.scenePos()
+        #print mouse_event.scenePos()
         self.pressPos = mouse_event.scenePos()
         self.break_mode = 2
         self.edge_broken = None
@@ -1475,6 +1501,7 @@ class SceneWidget(QtGui.QGraphicsScene):
                         return dialog.dialog.result()
 
             if isinstance(item, Edge):
+                print str(item.linha.id)
                 dialog = ConductorDialog(item)
                 if dialog.dialog.result() == 1:
                         if dialog.comprimentoLineEdit.text() == "":
