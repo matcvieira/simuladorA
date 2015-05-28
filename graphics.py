@@ -349,22 +349,19 @@ class Node(QtGui.QGraphicsRectItem):
             representação de um retângulo do tipo QtCore.QRectF.
         '''
         super(Node, self).__init__()
-        # Definição de atributos do tipo flag
-        self.con_lock = False
-        self.adjusted = False
-        self.bar_busy = False
-        self.Fixed = False
-        self.semiFixed = False
-        # Definição de diversos atributos que serão usados posteriormente
-        self.id = id(self)              # Atributo que guarda id única do item
-        self.edges = {}                 # Dicionário contendo edges do item
-        self.l0 = None                  # Variável auxiliar de posição
-        self.edges_no_sub = {}          # Falta perguntar ao lucas o que é isso
-        self.myItemType = item_type     # Define o tipo de item
-        self.edge_counter = 0           # Contador que acompanha o nº de edges
-        self.mean_pos = None            # Atributo de posição média
-        self.text_config = 'Custom'     # Atributo da configuração de relé
-        self.pos_ref = 0                # Atributo de posição referência
+        # Definição de atributos do tipo flag:
+        self.bar_busy = False           # flag - barra ocupada.
+        self.Fixed = False              # flag - item fixado a uma barra.
+        # Definição de diversos atributos que serão usados posteriormente.
+        self.id = id(self)              # Atributo que guarda id única do item.
+        self.edges = {}                 # Dicionário contendo edges do item.
+        self.l0 = None                  # Variável auxiliar de posição.
+        self.edges_no_sub = {}          # Falta perguntar ao lucas.
+        self.myItemType = item_type     # Define o tipo de item.
+        self.edge_counter = 0           # Contador que acompanha o nº de edges.
+        self.mean_pos = None            # Atributo de posição média.
+        self.text_config = 'Custom'     # Atributo da configuração de relé.
+        self.pos_ref = 0                # Atributo de posição referência.
         # Se o item a ser inserido for do tipo subestação:
         if self.myItemType == self.Subestacao:
             # Define o retângulo.
@@ -741,8 +738,6 @@ class Node(QtGui.QGraphicsRectItem):
             Este método implementa uma grade invisível na cena, que limita o
             movimento dos Nodes para posições bem definidas.
         '''
-        # Seta uma flag que indica que este item foi ajustado.
-        self.adjusted = True
         # Ajuste de posição empírico
         item_x = pos.x() - 5
         item_y = pos.y() - 5
@@ -848,104 +843,135 @@ class Node(QtGui.QGraphicsRectItem):
 
 class SceneWidget(QtGui.QGraphicsScene):
     '''
-        Classe que implementa o container Grafico onde os
-        widgets residirão
+        Classe que implementa o container Gráfico onde os
+        widgets residirão, denominado cena.
     '''
 
-    # tipos de modos de iteracao com o diagrama grafico
+    # Tipos de modos de interacao com o diagrama grafico
     InsertItem, InsertLine, InsertText, MoveItem, SelectItems = range(5)
 
-    # tipos de estilos para o background do diagrama grafico
+    # Tipos de estilos para o background do diagrama grafico
     GridStyle, NoStyle = range(2)
-    # signal definido para a classe SceneWidget enviado quando um item é
+    # Signal definido para a classe SceneWidget enviado quando um item é
     # inserido no diagrama grafico
     itemInserted = QtCore.Signal(int)
 
     def __init__(self):
 
         super(SceneWidget, self).__init__()
-        self.setSceneRect(0, 0, 800, 800)
-        self.myMode = self.MoveItem
-        self.myItemType = Node.Subestacao
-        self.myBackgroundSytle = self.NoStyle
+        # Definição de flags
+        self.start_item_is_ghost = False
+        self.end_item_is_ghost = False
         self.keyControlIsPressed = False
+        # Definição de atributos auxiliares
         self.line = None
         self.no = None
         self.ghost = None
         self.selectRect = None
-        self.start_item_is_ghost = False
-        self.end_item_is_ghost = False
         self.text_item = None
-        self.create_actions()
-        self.create_menus()
-        self.undoStack = QtGui.QUndoStack()
-        self.custom_dict = {'Corrente Nominal': 0, 'Capacidade de Interrupcao': 0, 'Sequencia':0}
         self.dict_prop = {}
-        self.create_dict(100,4,4,'ABB')
-        self.create_dict(150,5,3,'SEL')
-        self.create_dict(200,6,3,'BOSCH')
         self.lista_no_conectivo = []
-
+        # Definição da geometria inicial da cena
+        self.setSceneRect(0, 0, 800, 800)
+        self.myMode = self.MoveItem
+        self.myItemType = Node.Subestacao
+        self.my_background_style = self.NoStyle
+        # Execuções de métodos iniciais
+        # Cria as ações que podem ser realizadas na cena (ver create_actions
+        # em SceneWidget)
+        self.create_actions()
+        # Cria os menus que serão utilizados na cena (ver create_menus em
+        # SceneWidget)
+        self.create_menus()
+        # Cria a pilha de comandos UNDO para implementação dos comandos
+        # desfazer e refazer (CTRL+Z e CTRL+Y). PENDÊNCIA.
+        self.undoStack = QtGui.QUndoStack()
+        # Cria os dicionários de padrões dos relés (ver create_dict em
+        # SceneWidget
+        self.custom_dict = {'Corrente Nominal': 0,
+                            'Capacidade de Interrupcao': 0, 'Sequencia': 0}
+        self.create_dict(100, 4, 4, 'ABB')
+        self.create_dict(150, 5, 3, 'SEL')
+        self.create_dict(200, 6, 3, 'BOSCH')
 
     def create_dict(self, corrente, capacidade, num_rel, padrao):
-        prop = {'Corrente Nominal': corrente, 'Capacidade de Interrupcao': capacidade, 'Sequencia':num_rel}
+        '''
+            Este método cria um dicionário de um padrão de religador comercial,
+            de acordo com os parâmetros passados.
+        '''
+        prop = {'Corrente Nominal': corrente,
+                'Capacidade de Interrupcao': capacidade, 'Sequencia': num_rel}
         self.dict_prop[padrao] = prop
-
 
     def mousePressEvent(self, mouse_event):
         '''
-            Este metodo define as acoes realizadas quando um evento do tipo
-            mousePress e detectado no diagrama grafico
+            Este método define as ações realizadas quando um evento do tipo
+            mousePress é detectado no diagrama grafico
         '''
         super(SceneWidget, self).mousePressEvent(mouse_event)
-        #print mouse_event.scenePos()
+        # Armazena em um atributo a posição em que o mouse foi apertado.
         self.pressPos = mouse_event.scenePos()
+        # Define o break_mode, utilizado no método de quebrar linhas (ver
+        # break_edge em SceneWidget.
         self.break_mode = 2
+        # Cria uma variável para receber uma edge que foi quebrada.
         self.edge_broken = None
-        # print "=========================Lista de Nós Conectivos=========================\n\n"
-        # for no in self.lista_no_conectivo:
-        #     print str(id(no)) + "\n"
-        # print "=========================================================================\n\n"
-        # for no in self.lista_no_conectivo:
-        #     print "===============================NÓ CONECTIVO - " + str(id(no)) + "============\n\n"
-        #     for no2 in no.terminal_list:
-        #         print "terminal: " + str(id(no2)) + "\n" + "objeto: " + str(id(no2.parent)) + "\n" + "Posição: " + str(no2.parent.scenePos()) + "\n"
-        #     print "=====================================================================\n\n"
-
-        # print "--------------------------------------------------------------------------"
-
-
-
+        # Define as ações para quando o botão apertado do mouse NÃO for o
+        # esquerdo.
         if (mouse_event.button() != QtCore.Qt.LeftButton):
+            # Variável auxiliar que indica se o nó tem prioridade.
             node_priority = False
+            # Limpa seleção de itens na cena.
             self.clearSelection()
+            # Cria um elipse que será adicionado e retirado da cena no término
+            # da função, de forma que nunca será visível ao usuário. O elipse
+            # é inserido na posição de press do mouse.
+            # O elipse dá precisão ao clique do usuário. Toda ação será inter-
+            # pretada com uma margem de seleção ao redor, representada pelo
+            # elipse.
             ell = QtGui.QGraphicsEllipseItem()
-            ell.setRect(QtCore.QRectF(mouse_event.scenePos() - QtCore.QPointF(10,10), QtCore.QSizeF(30,30)))
+            ell.setRect(
+                QtCore.QRectF(
+                    mouse_event.scenePos()
+                    - QtCore.QPointF(10, 10), QtCore.QSizeF(30, 30)))
             self.addItem(ell)
-
+            # Testa todos os itens da cena.
             for item in self.items():
+                # Se o elipse de precisão colidir com a cena e este for um
+                # Node, seta-se prioridade para o mesmo.
                 if ell.collidesWithItem(item):
                     if isinstance(item, Node):
                         node_priority = True
 
+            # Testa novamente todos os itens da cena.
             for item in self.items():
-                if ell.collidesWithItem(item) and isinstance(item, Edge) and not node_priority:
+                # Se o elipse colidir com uma edge e não houver prioridade de
+                # nó, abre-se o menu de opções (context) da Edge
+                if (ell.collidesWithItem(item) and isinstance(item, Edge)
+                        and not node_priority):
                     self.removeItem(ell)
                     item.setSelected(True)
                     item.myEdgeMenu.exec_(mouse_event.screenPos())
                     item.setSelected(False)
                     return
+            # Caso não haja linhas colidindo, remove o elipse e retorna.
             self.removeItem(ell)
             return
+        # Cria uma variável para receber item oculto e removê-lo, caso exista.
         item_oculto = None
         for item in self.items():
             if not item.isVisible():
                 item_oculto = item
-        if item_oculto == None:
+        if item_oculto is None:
             pass
         else:
             self.removeItem(item_oculto)
+
+        # Caso o botão pressionado do mouse for o esquerdo:
+        # Entra no modo passado à cena.
+        # Se o modo for de inserção de itens:
         if self.myMode == self.InsertItem:
+            # Insere o item com determinado tipo (ver Node).
             if self.myItemType == Node.Religador:
                 item = Node(self.myItemType, self.myRecloserMenu)
             elif self.myItemType == Node.Barra:
@@ -954,13 +980,14 @@ class SceneWidget(QtGui.QGraphicsScene):
                 item = Node(self.myItemType, self.mySubstationMenu)
             elif self.myItemType == Node.NoDeCarga:
                 item = Node(self.myItemType, self.mySubstationMenu)
-
-            
-            
-
+            # Ajusta a posição do item para a posição do press do mouse.
             item.setPos(item.adjust_in_grid(mouse_event.scenePos()))
             self.addItem(item)
 
+            # Quando um item é adicionado, o dialog de configuração se abre
+            # para que o usuário prontamente insira seus dados (ver
+            # launch_dialog). Caso o usuário cancele a janela, o item é
+            # removido da cena.
             if self.myItemType == Node.Religador:
                 item.setSelected(True)
                 result = self.launch_dialog()
@@ -980,31 +1007,52 @@ class SceneWidget(QtGui.QGraphicsScene):
                 item.setSelected(False)
                 if result == 0:
                     self.removeItem(item)
-                
+
             elif self.myItemType == Node.NoDeCarga:
                 item.setSelected(True)
                 result = self.launch_dialog()
                 item.setSelected(False)
                 if result == 0:
                     self.removeItem(item)
-
-            #item.setPos(mouse_event.scenePos())
+            # Cria um comando para que seja possibilitada a ação de desfazer/
+            # refazer. PENDÊNCIA
             comando = add_remove_command("Add", self, item)
             self.undoStack.push(comando)
+            # Emite um sinal contendo o tipo do item.
             self.itemInserted.emit(self.myItemType)
 
+        # Caso o modo passado à cena seja de inserção de linha:
         elif self.myMode == self.InsertLine:
+            # Cria o elipse para o mesmo fim explicado anteriormente: dar
+            # margem de ação para os "presses" do mouse
             ell = QtGui.QGraphicsEllipseItem()
-            ell.setRect(QtCore.QRectF(mouse_event.scenePos() - QtCore.QPointF(10,10), QtCore.QSizeF(30,30)))
+            ell.setRect(
+                QtCore.QRectF(
+                    mouse_event.scenePos()
+                    - QtCore.QPointF(10, 10), QtCore.QSizeF(30, 30)))
             self.addItem(ell)
+            # Seta a prioridade de Node como falsa
             node_priority = False
+            # Aqui se cria uma legenda para os tipos de colisão possível.
             edge_collision, node_collision, ellipse_collision = range(3)
+            # Cria-se uma variável para receber o tipo de colisão
             collision = None
+            # Varre os itens que estejam na posição apertada pelo mouse.
+            # Se o item for do tipo Node, seta prioridade para o mesmo.
             for item in self.items(mouse_event.scenePos()):
                 if isinstance(item, Node):
                     node_priority = True
+            # Varre todos os itens da cena que colidem com o elipse de
+            # precisão:
             for item in self.items():
                 if ell.collidesWithItem(item):
+                    # 1) Se este item for do tipo Edge e a prioridade de Node
+                    # estiver desligada, seta a colisão como colisão de Edge.
+                    # Ou seja, o usuário está inserindo uma linha em cima de
+                    # outra linha, o que provoca uma quebra na linha original
+                    # (criar derivações)
+                    # IMPORTANTE: O break_mode associado com esta operação é 0.
+                    # A Edge que será quebrada também é armazenada.
                     if isinstance(item, Edge) and not node_priority:
 
                         self.c_pos = (
@@ -1012,25 +1060,42 @@ class SceneWidget(QtGui.QGraphicsScene):
                         collision = edge_collision
                         self.break_mode = 0
                         self.edge_broken = item
-
+                    # 2) Se este item for do tipo Node, atribui-se este como o
+                    # Node de origem de uma nova linha. Seta a colisão como
+                    # colisão de Node.
                     elif isinstance(item, Node):
                         collision = node_collision
                         self.start_item = item
+                    # 3) Se este item for outro elipse, seta a colisão como
+                    # colisão de elipse.
                     elif isinstance(item, QtGui.QGraphicsEllipseItem):
                         collision = ellipse_collision
+            # Define uma posição inicial como sendo a posição de press do
+            # mouse.
             self.l0 = mouse_event.scenePos()
+            # Realiza o teste do tipo da colisão.
+            # 1) Colisão de edge: Existe necessidade de quebra de linha e da
+            # inserção dum nó conectivo para realizar a derivação. c_pos é a
+            # posição obtida anteriormente para o ponto médio da linha a ser quebrada.
+            # O start_item se torna o nó conectivo inserido.
             if collision == edge_collision:
                 self.no = Node(Node.NoConectivo, self.myLineMenu)
                 self.addItem(self.no)
                 self.no.setPos(self.c_pos - QtCore.QPointF(3.5, 3.5))
                 self.start_item = self.no
                 self.l0 = self.c_pos
-
+            # Se a colisão for com outro elipse, significa que o usuário inse-
+            # riu a linha num espaço livre da cena. Por ora, o programa adicio-
+            # nará um nó conectivo, que será removido futuramente se a ligação
+            # não se concretizar (ver mouseReleaseEvent de SceneWidget).
             elif collision == ellipse_collision:
                 self.no = Node(Node.NoConectivo, self.myLineMenu)
                 self.addItem(self.no)
                 self.no.setPos(mouse_event.scenePos())
                 self.start_item = self.no
+            # Terminados os testes, cria uma linha que está pronta para ser
+            # criada e atualizada à medida que o usuário move o mouse após o
+            # press.
             self.line = QtGui.QGraphicsLineItem(
                 QtCore.QLineF(
                     self.l0,
@@ -1040,6 +1105,8 @@ class SceneWidget(QtGui.QGraphicsScene):
             self.addItem(self.line)
             self.removeItem(ell)
 
+        # Se o modo de inserção for de texto, insere o texto com base na
+        # posição do mouse.
         elif self.myMode == self.InsertText:
             text_item = Text()
             text_item.setFont(self.myFont)
@@ -1051,14 +1118,9 @@ class SceneWidget(QtGui.QGraphicsScene):
             text_item.setDefaultTextColor(self.myTextColor)
             text_item.setPos(mouse_event.scenePos())
             self.textInserted.emit(text_item)
+        # Se o modo for de seleção de itens múltiplos:
         elif self.myMode == self.SelectItems:
             selection = True
-            # for item in self.items():
-            #     if item.isUnderMouse():
-            #         if isinstance(item,GhostR):
-            #             selection = True
-            #         else:
-            #             selection = False
             if selection:
                 init_point = mouse_event.scenePos()
                 self.selectRect = QtGui.QGraphicsRectItem(
@@ -1066,32 +1128,50 @@ class SceneWidget(QtGui.QGraphicsScene):
                 self.selectRect.setPen(
                     QtGui.QPen(QtCore.Qt.red, 2, QtCore.Qt.DashLine))
                 self.addItem(self.selectRect)
-
+        # Caso não seja nenhum destes modos, estamos no modo simples de
+        # seleção.
         else:
+            # Desliga as prioridades
             super(SceneWidget, self).mousePressEvent(mouse_event)
             priority_on = False
             priority_node = False
+            # Cria o elipse de precisão.
             ell = QtGui.QGraphicsEllipseItem()
-            ell.setRect(QtCore.QRectF(mouse_event.scenePos() - QtCore.QPointF(10,10), QtCore.QSizeF(30,30)))
+            ell.setRect(
+                QtCore.QRectF(
+                    mouse_event.scenePos()
+                    - QtCore.QPointF(10, 10), QtCore.QSizeF(30, 30)))
             self.addItem(ell)
+            # Varre itens que colidem com o elipse.
             for item in self.items():
+                # Se o item for do tipo Node ou Edge, seta prioridade para
+                # estes dois. Se o item for do tipo Node, seta também priori-
+                # dade de Node.
                 if ell.collidesWithItem(item):
                     if isinstance(item, Node) or isinstance(item, Edge):
                         if isinstance(item, Node):
                             priority_node = True
                         priority_on = True
+            # Varre itens que colidem com o elipse.
             for item in self.items():
                 if ell.collidesWithItem(item):
-                    if isinstance(item, QtGui.QGraphicsEllipseItem) and not priority_on:
+                    # Se o item for outro elipse, e não houver prioridade de
+                    # Node ou Edge, simplesmente limpa a seleção de objetos da
+                    # cena.
+                    if (isinstance(item, QtGui.QGraphicsEllipseItem)
+                            and not priority_on):
                         self.clearSelection()
+                    # Se o item for um Node, o mesmo é selecionado.
                     elif isinstance(item, Node):
                         self.removeItem(ell)
                         self.clearSelection()
                         item.setSelected(True)
+                    # Se o item for uma Edge e não houver prioridade de Node,
+                    # o mesmo é selecionado.
                     elif isinstance(item, Edge) and not priority_node:
                         self.removeItem(ell)
                         self.clearSelection()
-                        item.setSelected(True)                    
+                        item.setSelected(True)
                         return
             if ell.scene() == self:
                 self.removeItem(ell)
@@ -1129,7 +1209,7 @@ class SceneWidget(QtGui.QGraphicsScene):
             node_priority = False
             edge_priority = False
             block_on = False
-            if self.no != None:
+            if self.no is not None:
                 self.removeItem(self.no)
             # if self.start_item.myItemType == Node.NoConectivo:
             #     self.addItem(self.start_item)
@@ -1837,14 +1917,14 @@ class SceneWidget(QtGui.QGraphicsScene):
                 item.update_position()
 
     def set_grid(self):
-        if self.myBackgroundSytle == self.GridStyle:
+        if self.my_background_style == self.GridStyle:
             self.setBackgroundBrush(QtGui.QBrush(
                 QtCore.Qt.white, QtCore.Qt.NoBrush))
-            self.myBackgroundSytle = self.NoStyle
-        elif self.myBackgroundSytle == self.NoStyle:
+            self.my_background_style = self.NoStyle
+        elif self.my_background_style == self.NoStyle:
             self.setBackgroundBrush(QtGui.QBrush(
                 QtCore.Qt.lightGray, QtCore.Qt.CrossPattern))
-            self.myBackgroundSytle = self.GridStyle
+            self.my_background_style = self.GridStyle
 
 
 class ViewWidget(QtGui.QGraphicsView):
