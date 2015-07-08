@@ -866,7 +866,6 @@ class SceneWidget(QtGui.QGraphicsScene):
         # Definição de atributos auxiliares
         self.line = None
         self.no = None
-        self.ghost = None
         self.selectRect = None
         self.text_item = None
         self.dict_prop = {}
@@ -1016,7 +1015,7 @@ class SceneWidget(QtGui.QGraphicsScene):
                     self.removeItem(item)
             # Cria um comando para que seja possibilitada a ação de desfazer/
             # refazer. PENDÊNCIA
-            comando = add_remove_command("Add", self, item)
+            comando = AddRemoveCommand("Add", self, item)
             self.undoStack.push(comando)
             # Emite um sinal contendo o tipo do item.
             self.itemInserted.emit(self.myItemType)
@@ -1076,8 +1075,8 @@ class SceneWidget(QtGui.QGraphicsScene):
             # Realiza o teste do tipo da colisão.
             # 1) Colisão de edge: Existe necessidade de quebra de linha e da
             # inserção dum nó conectivo para realizar a derivação. c_pos é a
-            # posição obtida anteriormente para o ponto médio da linha a ser quebrada.
-            # O start_item se torna o nó conectivo inserido.
+            # posição obtida anteriormente para o ponto médio da linha a ser
+            # quebrada. O start_item se torna o nó conectivo inserido.
             if collision == edge_collision:
                 self.no = Node(Node.NoConectivo, self.myLineMenu)
                 self.addItem(self.no)
@@ -1180,18 +1179,23 @@ class SceneWidget(QtGui.QGraphicsScene):
 
     def mouseMoveEvent(self, mouse_event):
         '''
-            Este método define as acoes realizadas quando um evento do tipo
-            mouseMove é detectado no diagrama grafico. Neste caso desenha uma
-            linha quando o modo self.InsertLine está ativado
+            Este método define as ações realizadas quando um evento do tipo
+            mouseMove é detectado no diagrama grafico.
         '''
+        # Caso estejamos no modo de inserção de linha, desenha a nova linha
+        # de acordo com o movimento do mouse
         if self.myMode == self.InsertLine and self.line:
             self.clearSelection()
             new_line = QtCore.QLineF(
                 self.line.line().p1(), mouse_event.scenePos())
             self.line.setLine(new_line)
+        # Caso estejamos no modo simples de movimentação de item, herda a
+        # função nativa do PySide.
         elif self.myMode == self.MoveItem:
             super(SceneWidget, self).mouseMoveEvent(mouse_event)
             return
+        # Caso estejamos no modo de seleção de múltiplos itens, desenha o
+        # retângulo de seleção
         elif self.myMode == self.SelectItems and self.selectRect:
             new_rect = QtCore.QRectF(
                 self.selectRect.rect().topLeft(), mouse_event.scenePos())
@@ -1199,27 +1203,35 @@ class SceneWidget(QtGui.QGraphicsScene):
 
     def mouseReleaseEvent(self, mouse_event):
         '''
-            Este método define as acoes realizadas quando um evento do tipo
+            Este método define as ações realizadas quando um evento do tipo
             mouseRelease e detectado no diagrama grafico. Neste caso conecta
             os dois elementos que estão ligados pela linha criada no evento
             mousePress.
         '''
 
+        # Se o modo atual for de inserção de linha, desligam-se as prioridades
+        # de node e edge e cria uma flag block_on.
         if self.myMode == self.InsertLine and self.line:
             node_priority = False
             edge_priority = False
             block_on = False
+            # Remove o item self.no, já que ele foi criado provisoriamente
+            # para aparecer durante o aperto do mouse.
             if self.no is not None:
                 self.removeItem(self.no)
-            # if self.start_item.myItemType == Node.NoConectivo:
-            #     self.addItem(self.start_item)
+            # Cria o elipse de precisão localizado onde o mouse foi apertado.
             ell = QtGui.QGraphicsEllipseItem()
-            ell.setRect(QtCore.QRectF(mouse_event.scenePos() - QtCore.QPointF(10,10), QtCore.QSizeF(30,30)))
+            ell.setRect(QtCore.QRectF(mouse_event.scenePos() -
+                        QtCore.QPointF(10, 10), QtCore.QSizeF(30, 30)))
             self.addItem(ell)
 
             # Testes preliminares do start_item
+            # Se o start_item for uma barra, seta a flag block_on
             if self.start_item.myItemType == Node.Barra:
                 block_on = True
+            # Caso seja um religador, verifica se este já possui as duas
+            # ligações máximas permitidas. Se sim, remove o elipse de precisão
+            # e retorna a função.
             if self.start_item.myItemType == Node.Religador:
                 if len(self.start_item.edges) >= 2:
                     self.removeItem(self.line)
@@ -1228,19 +1240,25 @@ class SceneWidget(QtGui.QGraphicsScene):
                     return
 
             # Estabelecimento do end_item
+            # Se houver um item "debaixo" do mouse e este for um Node, seta a
+            # flag de prioridade de Node.
             for item in self.items():
                 if item.isUnderMouse():
                     if isinstance(item, Node):
                         node_priority = True
 
+            # Se o elipse de precisão englobar uma linha, seta a flag de
+            # prioridade de edge (ou prioridade de linha)
             for item in self.items():
                 if ell.collidesWithItem(item):
                     if isinstance(item, Edge):
                         edge_priority = True
 
+            # Testa se o elipse de precisão engloba um Node ou Edge.
             for item in self.items():
                 if ell.collidesWithItem(item):
-
+                    # Caso seja um Node, realiza o teste do número de ligações
+                    # máximo permitido (2).
                     if isinstance(item, Node):
                         if item.myItemType == Node.Religador:
                             if len(item.edges) >= 2:
@@ -1248,42 +1266,74 @@ class SceneWidget(QtGui.QGraphicsScene):
                                 self.line = None
                                 self.removeItem(ell)
                                 return
+                        # Esta condição impede que um item ligado a uma barra
+                        # já existente tenha sua condição de alinhamento
+                        # alterada pela conexão com outra barra. Em outras
+                        # palavras, não será permitido a ligação de uma barra
+                        # para um item que já esteja ligado a outra barra.
                         if block_on is True:
                             for edge in item.edges:
-                                if edge.w1.myItemType == Node.Barra or edge.w2.myItemType == Node.Barra:
+                                if (edge.w1.myItemType == Node.Barra
+                                        or edge.w2.myItemType == Node.Barra):
                                     self.removeItem(self.line)
                                     self.line = None
                                     self.removeItem(ell)
                                     return
+                        # Terminando-se os testes, o end_item é estabelecido
+                        # como o Node englobado pelo elipse de precisão.
                         self.end_item = item
 
+                    # Se o elipse engloba uma edge, e não há prioridade de
+                    # node, ou seja, não há um node "debaixo" do mouse:
                     elif isinstance(item, Edge) and not node_priority:
+                        # Se block_on está setada (ou seja, o start_item é uma
+                        # barra), remove a linha, o elipse de precisão e
+                        # retorna a função. Em outras palavras, não é possível
+                        # realizar a ligação de uma barra para outra linha
+                        # (quebra de linha).
                         if block_on is True:
                             self.removeItem(self.line)
                             self.line = None
                             self.removeItem(ell)
                             return
+                        # Caso contrário, a situação é de que o item final é
+                        # uma linha, ou seja, quebra-se a linha no meio para a
+                        # inserção de um nó de passagem.
+                        # Define o centro da linha.
                         c_pos = (item.line().p1() + item.line().p2()) / 2
+                        # Define o item final como um nó conectivo, com sua
+                        # posição no centro da linha a ser quebrada.
                         self.end_item = Node(Node.NoConectivo, self.myLineMenu)
-                        self.end_item.setPos(c_pos + QtCore.QPointF(-3.5, -3.5))
+                        self.end_item.setPos(c_pos +
+                                             QtCore.QPointF(-3.5, -3.5))
+                        # Define o break_mode como 1 (quebra regular de linha)
                         self.break_mode = 1
+                        # Armazena a linha a ser quebrada para uso posterior.
                         self.edge_broken = item
-                    elif isinstance(item, QtGui.QGraphicsEllipseItem) and not node_priority and not edge_priority:
+                    # Se o item englobado pelo elipse de precisão for ele
+                    # próprio, significa que não o botão do mouse não foi solto
+                    # sobre nenhum elemento na cena. Assim, cria-se
+                    # simplesmente um nó de passagem na posição clicada.
+                    elif (isinstance(item, QtGui.QGraphicsEllipseItem)
+                            and not node_priority and not edge_priority):
                         self.end_item = Node(Node.NoConectivo, self.myLineMenu)
                         self.end_item.setPos(mouse_event.scenePos())
+            # A linha provisória e o elipse de precisão são removidos.
             self.removeItem(self.line)
             self.line = None
             self.removeItem(ell)
-            print "checkpoint"
 
             # Testes posteriores do start_item e end_item
+            # Se o start item for uma barra e o end_item um simples nó
+            # conectivo, substitui-se o último por um religador.
             if self.start_item.myItemType == Node.Barra:
                 if self.end_item.myItemType == Node.NoConectivo:
                     self.removeItem(self.end_item)
                     self.end_item = Node(Node.Religador, self.myRecloserMenu)
                     self.addItem(self.end_item)
                     self.end_item.setPos(mouse_event.scenePos())
-
+            # Se o end item for uma barra e o start item um simples nó
+            # conectivo, substitui-se o último por um religador.
             if self.end_item.myItemType == Node.Barra:
                 if self.start_item.myItemType == Node.NoConectivo:
                     self.removeItem(self.start_item)
@@ -1291,8 +1341,8 @@ class SceneWidget(QtGui.QGraphicsScene):
                     self.addItem(self.start_item)
                     self.start_item.setPos(self.pressPos)
 
-
-            # Teste de comprimento de linha
+            # Teste de comprimento de linha. Se a linha criada for muito
+            # pequena, a função retorna sem a criação da mesma.
             dist = math.sqrt(
                 math.pow(
                     self.start_item.pos().x() -
@@ -1301,127 +1351,94 @@ class SceneWidget(QtGui.QGraphicsScene):
             if dist < 15:
                 print "Erro: Comprimento da ligação muito pequeno!"
                 return
+            # Se houver uma linha a ser quebrada, mas esta for fixa (ligada a
+            # uma barra), a quebra não será realizada e a função retorna.
             if self.edge_broken is not None and self.edge_broken.isPermanent:
+                print "Não se pode quebrar esta linha!"
                 return
-
-            if self.start_item.scene() == None:
+            # Correção de eventuais discrepâncias entre a associação de cena
+            # para os itens supracitados.
+            if self.start_item.scene() is None:
                 self.addItem(self.start_item)
-            if self.end_item.scene() == None:
+            if self.end_item.scene() is None:
                 self.addItem(self.end_item)
 
+            # Finalmente, faz-se a ligação entre start e end item e a adiciona
+            # a linha à cena.
             edge = Edge(self.start_item, self.end_item, self.myLineMenu)
             self.addItem(edge)
-
-
-            # # Adição de terminais e nós conectivos virtuais
-            # no_conectivo_1 = NoConect([])
-            # no_conectivo_2 = NoConect([])
-            
-            # if edge.w1.myItemType != Node.NoConectivo:
-
-            #     if edge.w1.terminal1.connected:
-            #         if edge.w1.terminal2.connected:
-            #             pass
-            #         else:
-            #             no_conectivo_1.terminal_list.append(edge.w1.terminal2)
-            #             edge.w1.terminal2.connect()
-            #             no_conectivo_1.terminal_list.append(edge.terminal1)
-            #             edge.terminal1.connect()
-            #             self.lista_no_conectivo.append(no_conectivo_1)
-            #             no_conectivo_1.define_no()
-            #     else:
-            #         no_conectivo_1.terminal_list.append(edge.w1.terminal1)
-            #         edge.w1.terminal1.connect()
-            #         no_conectivo_1.terminal_list.append(edge.terminal1)
-            #         edge.terminal1.connect()
-            #         self.lista_no_conectivo.append(no_conectivo_1)
-            #         no_conectivo_1.define_no()
-
-            # if edge.w2.myItemType != Node.NoConectivo:
-
-            #     if edge.w2.terminal1.connected:
-            #         if edge.w2.terminal2.connected:
-            #             pass
-            #         else:
-            #             no_conectivo_2.terminal_list.append(edge.w2.terminal2)
-            #             edge.w2.terminal2.connect()
-            #             no_conectivo_2.terminal_list.append(edge.terminal2)
-            #             edge.terminal2.connect()
-            #             self.lista_no_conectivo.append(no_conectivo_2)
-            #             no_conectivo_2.define_no()
-            #     else:
-            #         no_conectivo_2.terminal_list.append(edge.w2.terminal1)
-            #         edge.w2.terminal1.connect()
-            #         no_conectivo_2.terminal_list.append(edge.terminal2)
-            #         edge.terminal2.connect()
-            #         self.lista_no_conectivo.append(no_conectivo_2)
-            #         no_conectivo_2.define_no()
-
-
             edge.set_color(QtCore.Qt.black)
-            # self.addItem(edge.GhostRetItem)
             edge.update_position()
-            #Teste de quebra de linha
+
+            # Chama a função de break_edge com seu devido modo de quebra
             self.break_edge(self.edge_broken, self.break_mode, edge)
 
-
-            # comando = command("Add Line", self, edge, None)
-            # self.undoStack.push(comando)
-
+            # Inversão dos itens w1 e w2 por conveniência, caso w1 seja um nó
+            # conectivo
             if edge.w1.myItemType == Node.NoConectivo:
                 aux = edge.w1
                 edge.w1 = edge.w2
                 edge.w2 = aux
 
+            # Deseleciona itens selecionados
             for item in self.selectedItems():
                 item.setSelected(False)
 
             self.no = None
 
+        # Caso o modo seja de seleção de itens, seleciona os itens englobados
+        # pelo retângulo de seleção.
         elif self.myMode == self.SelectItems and self.selectRect:
             path = QtGui.QPainterPath()
             path.addRect(self.selectRect.rect())
             self.setSelectionArea(path)
             self.removeItem(self.selectRect)
             self.selectRect = None
-            # for item in self.selectedItems():
-            #     if isinstance(item, Edge):
-            #         # if item.w1.myItemType == Node.NoConectivo or item.w1.myItemType == Node.Barra:
-            #         #     item.w1.setSelected(True)
-            #         if item.w2.myItemType == Node.NoConectivo or item.w2.myItemType == Node.Barra:
-            #             item.w2.setSelected(True)
+
         self.line = None
         self.itemInserted.emit(3)
-        self.ghost = None
         super(SceneWidget, self).mouseReleaseEvent(mouse_event)
 
     def mouseDoubleClickEvent(self, mouse_event):
-        
+        '''
+            Este método define as ações realizadas quando um evento do tipo
+            mouseDoubleClick e detectado no diagrama grafico. Neste caso
+            conecta os dois elementos que estão ligados pela linha criada no
+            evento mousePress.
+        '''
+        # Se um item for clicado duplamente, abre o diálogo de configuração
+        # de parâmetros.
         for item in self.selectedItems():
             if isinstance(item, Node):
                 item.setSelected(True)
                 self.launch_dialog()
                 item.setSelected(False)
                 return
+        # Cria o item elipse de precisão.
         ell = QtGui.QGraphicsEllipseItem()
-        ell.setRect(QtCore.QRectF(mouse_event.scenePos() - QtCore.QPointF(10,10), QtCore.QSizeF(30,30)))
+        ell.setRect(QtCore.QRectF(mouse_event.scenePos() -
+                    QtCore.QPointF(10, 10), QtCore.QSizeF(30, 30)))
         self.addItem(ell)
+
+        # Se o elipse de precisão englobar uma linha, abre o diálogo de
+        # configuração de linha.
         for item in self.items():
             if item.collidesWithItem(ell) and isinstance(item, Edge):
-                if ell.scene() != None:
+                if ell.scene() is not None:
                     self.removeItem(ell)
                 item.setSelected(True)
                 self.launch_dialog()
                 item.setSelected(False)
                 return
             else:
-                if ell.scene() != None:
+                if ell.scene() is not None:
                     self.removeItem(ell)
 
-        #     Problema quando tenta-se modificar o texto dos componentes
+    # Define a função de aperto de diversas teclas. O trecho a seguir é
+    # auto-explicativo.
     def keyPressEvent(self, event):
         key = event.key()
-        if self.keyControlIsPressed == True:
+        if self.keyControlIsPressed is True:
             if key == QtCore.Qt.Key_Z:
                 self.undoStack.undo()
             if key == QtCore.Qt.Key_Y:
@@ -1458,11 +1475,13 @@ class SceneWidget(QtGui.QGraphicsScene):
         if key == QtCore.Qt.Key_Control:
             self.keyControlIsPressed = False
 
-    def break_edge(self, edge, mode, original_edge, insert = None):
+    # Função break_edge usada para quebrar a linha quando a inserção é a partir
+    # ou em cima de uma linha.
+    def break_edge(self, edge, mode, original_edge, insert=None):
         if mode == 3:
-            break_point = insert 
+            break_point = insert
         if mode == 2:
-            command = add_remove_command("Add", self, original_edge)
+            command = AddRemoveCommand("Add", self, original_edge)
             self.undoStack.push(command)
             return
         if mode == 0:
@@ -1479,6 +1498,7 @@ class SceneWidget(QtGui.QGraphicsScene):
         new_edge_1.update_position()
         new_edge_2.update_position()
 
+    # Definição da função de recuperar uma linha quando está foi quebrada.
     def recover_edge(self, item):
         w = []
 
@@ -1510,16 +1530,19 @@ class SceneWidget(QtGui.QGraphicsScene):
         self.myMode = mode
 
     def change_state(self):
+        '''
+            Define a função que muda o estado do religador. Esta função será
+            chamada no momento que o usuário tiver selecionado um religador e
+            pressionado a barra de espaço.
+        '''
         print "entrou"
-        
         for item in self.selectedItems():
             if item.myItemType == Node.Religador:
                 aviso = AvisoReligador(item.chave.normalOpen, item.chave.nome)
-                if aviso.dialog.result() == 1: 
+                if aviso.dialog.result() == 1:
                     print item.chave.normalOpen
-                    if item.chave.normalOpen == 1:               
+                    if item.chave.normalOpen == 1:
                         item.chave.normalOpen = 0
-
                     elif item.chave.normalOpen == 0:
                         item.chave.normalOpen = 1
                     item.setSelected(False)
@@ -1531,7 +1554,7 @@ class SceneWidget(QtGui.QGraphicsScene):
     def create_actions(self):
         '''
             Este metodo cria as ações que serão utilizadas nos menus dos itens
-            gráficos.
+            gráficos. Auto-explicativo: ver QtGui.QAction na biblioteca Pyside.
         '''
         self.propertysAction = QtGui.QAction(
             'Abrir/Fechar', self, shortcut='Enter',
@@ -1555,7 +1578,8 @@ class SceneWidget(QtGui.QGraphicsScene):
     def create_menus(self):
         '''
             Este metodo cria os menus de cada um dos itens gráficos: religador,
-            subestação, barra e linha.
+            subestação, barra e linha. Auto-explicativo: ver QtGui.QMenu na
+            biblioteca do Pyside.
         '''
         self.myBusMenu = QtGui.QMenu('Menu Bus')
         self.myBusMenu.addAction(self.increaseBusAction)
@@ -1585,38 +1609,54 @@ class SceneWidget(QtGui.QGraphicsScene):
         for item in self.selectedItems():
             item.Noc = None
             if isinstance(item, Node):
+                # Se o item selecionado não for um nó conectivo e tiver pelo
+                # menos uma edge associada, este item é eliminado e em seu
+                # lugar aparece um nó conectivo.
                 if item.myItemType != Node.NoConectivo:
                     lista = item.edges
                     if len(item.edges) >= 1:
                         item.Noc = Node(Node.NoConectivo, self.myLineMenu)
                         self.addItem(item.Noc)
-                        item.Noc.setPos(item.scenePos() + QtCore.QPointF(20, 20))
+                        item.Noc.setPos(item.scenePos() +
+                                        QtCore.QPointF(20, 20))
                         for edge in lista:
                             if edge.w1 == item:
-                                new_edge = Edge(item.Noc, edge.w2, self.myLineMenu)
+                                new_edge = Edge(
+                                    item.Noc, edge.w2, self.myLineMenu)
                             else:
-                                new_edge = Edge(item.Noc, edge.w1, self.myLineMenu)
+                                new_edge = Edge(
+                                    item.Noc, edge.w1, self.myLineMenu)
                             self.addItem(new_edge)
                     item.remove_edges()
+                # Caso o item possua mais de duas linhas ligadas, o comporta
+                # mento se torna imprevisível, então é emitida uma mensagem ao
+                # usuário restringindo esta ação.
                 if len(item.edges) > 2:
                     dialog = AvisoConexaoDialog()
                     return
-                elif len(item.edges) == 2 and item.myItemType == Node.NoConectivo:
+                # Caso o item deletado seja um nó conectivo conectando duas
+                # linhas, este é eliminado e é feito uma só linha conectada
+                # aos objetos anteriormente ligados.
+                elif (len(item.edges) == 2
+                        and item.myItemType == Node.NoConectivo):
                     self.recover_edge(item)
             if isinstance(item, Edge):
-                if item.w1.myItemType == Node.NoConectivo and len(item.w1.edges) <= 1:
+
+                # Se o item selecionado for uma edge e o extremo analisado for
+                # um nó conectivo solitário, este é deletado juntamente com
+                # a linha.
+                if (item.w1.myItemType == Node.NoConectivo
+                        and len(item.w1.edges) <= 1):
                     self.removeItem(item.w1)
-                if item.w2.myItemType == Node.NoConectivo and len(item.w2.edges) <= 1:
+                if (item.w2.myItemType == Node.NoConectivo
+                        and len(item.w2.edges) <= 1):
                     self.removeItem(item.w2)
                 item.w1.remove_edge(item)
                 item.w2.remove_edge(item)
-                # self.removeItem(item.GhostRetItem)
+            # Remove o item
             self.removeItem(item)
-            command = add_remove_command("Remove", self, item)
-            
+            command = AddRemoveCommand("Remove", self, item)
             self.undoStack.push(command)
-
-
 
     def launch_dialog(self):
         '''
@@ -1624,36 +1664,52 @@ class SceneWidget(QtGui.QGraphicsScene):
             gráficos do diagrama.
         '''
         for item in self.selectedItems():
+            # O comentário explicativo abaixo é valido para o caso dos diversos
+            # tipos de node.
             if isinstance(item, Node):
+                # Caso Religador
                 if item.myItemType == Node.Religador:
+                    # Chama a função relativa à abertura do dialog referente
+                    # ao religador
                     dialog = RecloserDialog(item)
+                    # Caso o usuário aperte "OK":
                     if dialog.dialog.result() == 1:
-                        item.text_config = unicode(dialog.testeLineEdit.currentText())
+                        item.text_config = unicode(
+                            dialog.testeLineEdit.currentText())
+                        # Válido para cada caixa de entrada: Se a entrada do
+                        # usuário for em branco, o campo continua com o mesmo
+                        # valor atribuído a ele anteriormente. Caso contrário,
+                        # atribui o valor inserido pelo usuário ao parâmetro
+                        # correspondente.
                         if dialog.identificaOLineEdit.text() == "":
                             pass
                         else:
                             item.chave.nome = dialog.identificaOLineEdit.text()
-                            item.text.setPlainText(dialog.identificaOLineEdit.text())
+                            item.text.setPlainText(
+                                dialog.identificaOLineEdit.text())
                         if dialog.correnteNominalLineEdit.text() == "":
                             pass
                         else:
-                            item.chave.ratedCurrent = dialog.correnteNominalLineEdit.text()
+                            item.chave.ratedCurrent = \
+                                dialog.correnteNominalLineEdit.text()
                         if dialog.capacidadeDeInterrupOLineEdit.text() == "":
                             pass
                         else:
-                            item.chave.breakingCapacity = dialog.capacidadeDeInterrupOLineEdit.text()
-                        if dialog.nDeSequNciasDeReligamentoLineEdit.text() == "":
+                            item.chave.breakingCapacity = \
+                                dialog.capacidadeDeInterrupOLineEdit.text()
+                        if dialog.nDeSequNciasDeReligamentoLineEdit.text() == \
+                                "":
                             pass
                         else:
-                            item.chave.recloseSequences = dialog.nDeSequNciasDeReligamentoLineEdit.text()
+                            item.chave.recloseSequences = \
+                                dialog.nDeSequNciasDeReligamentoLineEdit.text()
                     else:
                         return dialog.dialog.result()
-                
-            if isinstance(item, Node):
+
+                # Caso Barra
                 if item.myItemType == Node.Barra:
                     dialog = BarraDialog(item)
                     if dialog.dialog.result() == 1:
-                        
                         if dialog.nomeLineEdit.text() == "":
                             pass
                         else:
@@ -1666,11 +1722,10 @@ class SceneWidget(QtGui.QGraphicsScene):
                     else:
                         return dialog.dialog.result()
 
-            if isinstance(item, Node):
+                # Caso Subestação
                 if item.myItemType == Node.Subestacao:
                     dialog = SubstationDialog(item)
                     if dialog.dialog.result() == 1:
-                        
                         if dialog.nomeLineEdit.text() == "":
                             pass
                         else:
@@ -1679,10 +1734,38 @@ class SceneWidget(QtGui.QGraphicsScene):
                         if dialog.tpLineEdit.text() == "":
                             pass
                         else:
-                            item.substation.tensao_primario = dialog.tpLineEdit.text()
+                            item.substation.tensao_primario = \
+                                dialog.tpLineEdit.text()
                     else:
                         return dialog.dialog.result()
 
+                # Caso Nó de Carga
+                if item.myItemType == Node.NoDeCarga:
+                    dialog = EnergyConsumerDialog(item)
+                    if dialog.dialog.result() == 1:
+                        if dialog.identificaOLineEdit.text() == "":
+                            pass
+                        else:
+                            item.text.setPlainText(
+                                dialog.identificaOLineEdit.text())
+                            item.no_de_carga.nome = \
+                                dialog.identificaOLineEdit.text()
+                        if dialog.potNciaAtivaLineEdit.text() == "":
+                            pass
+                        else:
+                            item.no_de_carga.potencia_ativa = \
+                                dialog.potNciaAtivaLineEdit.text()
+                        if dialog.potNciaReativaLineEdit.text() == "":
+                            pass
+                        else:
+                            item.no_de_carga.potencia_reativa = \
+                                dialog.potNciaReativaLineEdit.text()
+                    else:
+                        return dialog.dialog.result()
+
+            # Caso o item seja uma linha, abre-se o dialog referente às
+            # configuração da linha. O procedimento é análogo ao feito para
+            # o caso Node.
             if isinstance(item, Edge):
                 print str(item.linha.id)
                 dialog = ConductorDialog(item)
@@ -1690,54 +1773,39 @@ class SceneWidget(QtGui.QGraphicsScene):
                         if dialog.comprimentoLineEdit.text() == "":
                             pass
                         else:
-                            item.linha.comprimento = dialog.comprimentoLineEdit.text()
+                            item.linha.comprimento = \
+                                dialog.comprimentoLineEdit.text()
                         if dialog.resistenciaLineEdit.text() == "":
                             pass
                         else:
-                            item.linha.resistencia = dialog.resistenciaLineEdit.text()
+                            item.linha.resistencia = \
+                                dialog.resistenciaLineEdit.text()
                         if dialog.resistenciaZeroLineEdit.text() == "":
                             pass
                         else:
-                            item.linha.resistencia_zero = dialog.resistenciaZeroLineEdit.text()
+                            item.linha.resistencia_zero = \
+                                dialog.resistenciaZeroLineEdit.text()
                         if dialog.reatanciaLineEdit.text() == "":
                             pass
                         else:
-                            item.linha.reatancia = dialog.reatanciaLineEdit.text()
+                            item.linha.reatancia = \
+                                dialog.reatanciaLineEdit.text()
                         if dialog.reatanciaZeroLineEdit.text() == "":
                             pass
                         else:
-                            item.linha.reatancia_zero = dialog.reatanciaZeroLineEdit.text()
+                            item.linha.reatancia_zero = \
+                                dialog.reatanciaZeroLineEdit.text()
                         if dialog.ampacidadeLineEdit.text() == "":
                             pass
                         else:
-                            item.linha.ampacidade = dialog.ampacidadeLineEdit.text()
+                            item.linha.ampacidade = \
+                                dialog.ampacidadeLineEdit.text()
                 else:
-                        return dialog.dialog.result()
-        
-            if isinstance(item, Node):
-                if item.myItemType == Node.NoDeCarga:
-                    dialog = EnergyConsumerDialog(item)
-                    if dialog.dialog.result() == 1:
-                        
-                        if dialog.identificaOLineEdit.text() == "":
-                            pass
-                        else:
-                            item.text.setPlainText(dialog.identificaOLineEdit.text())
-                            item.no_de_carga.nome = dialog.identificaOLineEdit.text()
-                        if dialog.potNciaAtivaLineEdit.text() == "":
-                            pass
-                        else:
-                            item.no_de_carga.potencia_ativa = dialog.potNciaAtivaLineEdit.text() 
-                        if dialog.potNciaReativaLineEdit.text() == "":
-                            pass
-                        else:
-                            item.no_de_carga.potencia_reativa = dialog.potNciaReativaLineEdit.text()
-                    else:
                         return dialog.dialog.result()
 
     def increase_bus(self):
         '''
-            Este método implementa a açao de aumentar o tamanho do item gráfico
+            Este método implementa a ação de aumentar o tamanho do item gráfico
             barra.
         '''
 
@@ -1747,8 +1815,6 @@ class SceneWidget(QtGui.QGraphicsScene):
                 item.setRect(
                     item.rect().x(), item.rect().y(), item.rect().width(),
                     item.rect().height() * 1.25)
-                comando = command("Increase Bus", self, item, None)
-                self.undoStack.push(comando)
 
     def decrease_bus(self):
         '''
@@ -1768,22 +1834,27 @@ class SceneWidget(QtGui.QGraphicsScene):
         for item in self.selectedItems():
             if isinstance(item, Edge):
                 for edge in item.w1.edges:
-                    if edge.w1.myItemType == Node.Barra or edge.w2.myItemType == Node.Barra:
+                    if (edge.w1.myItemType == Node.Barra
+                            or edge.w2.myItemType == Node.Barra):
                         w1_is_locked = True
                 for edge in item.w2.edges:
-                    if edge.w1.myItemType == Node.Barra or edge.w2.myItemType == Node.Barra:
+                    if (edge.w1.myItemType == Node.Barra
+                            or edge.w2.myItemType == Node.Barra):
                         w2_is_locked = True
                 if w1_is_locked and not w2_is_locked:
-                    pos = QtCore.QPointF(item.w2.center().x(), item.w1.center().y())
+                    pos = QtCore.QPointF(
+                        item.w2.center().x(), item.w1.center().y())
                     item.w2.set_center(pos)
                     item.update_position()
                 if w2_is_locked and not w1_is_locked:
-                    pos = QtCore.QPointF(item.w1.center().x(), item.w2.center().y())
+                    pos = QtCore.QPointF(
+                        item.w1.center().x(), item.w2.center().y())
                     item.w1.set_center(pos)
                     item.update_position()
 
                 else:
-                    pos = QtCore.QPointF(item.w2.center().x(), item.w1.center().y())
+                    pos = QtCore.QPointF(
+                        item.w2.center().x(), item.w1.center().y())
                     item.w2.set_center(pos)
                     item.update_position()
         for item in self.items():
@@ -1794,18 +1865,17 @@ class SceneWidget(QtGui.QGraphicsScene):
         for item in self.selectedItems():
             if isinstance(item, Edge):
                 if item.w1.x() < item.w2.x():
-                    pos = QtCore.QPointF(item.w1.center().x(), item.w2.center().y())
+                    pos = QtCore.QPointF(
+                        item.w1.center().x(), item.w2.center().y())
                     item.w2.set_center(pos)
                 else:
-                    pos = QtCore.QPointF(item.w2.center().x(), item.w1.center().y())
+                    pos = QtCore.QPointF(
+                        item.w2.center().x(), item.w1.center().y())
                     item.w1.set_center(pos)
                 item.update_position()
                 item.update_ret()
 
     def h_align(self):
-        fix = False
-        fixed_items = []
-        first_priority = False
         has_pos_priority = False
         has_bar_priority = False
         y_pos_list = []
@@ -1844,8 +1914,6 @@ class SceneWidget(QtGui.QGraphicsScene):
                 if item.Fixed is True:
                         mean_pos = item.pos().y()
                         item.mean_pos = mean_pos
-                        first_priority = True
-
 
         for item in self.selectedItems():
             if isinstance(item, Node):
@@ -1853,29 +1921,8 @@ class SceneWidget(QtGui.QGraphicsScene):
 
                 if item.Fixed is True:
                     continue
-
-                # for edge in item.edges:
-                #     if edge.w1.Fixed:
-                #         pos = edge.w1.mean_pos
-                #         item.mean_pos = pos
-                #         item.semiFixed = True
-
-                #     if edge.w1.semiFixed:
-                #         pos = edge.w1.mean_pos
-                #         item.mean_pos = pos
-                #         item.semiFixed = True
-                        
-                #     if edge.w2.Fixed:
-                #         pos = edge.w2.mean_pos
-                #         item.mean_pos = pos
-                #         item.semiFixed = True
-
-                #     if edge.w2.semiFixed:
-                #         pos = edge.w2.mean_pos
-                #         item.mean_pos = pos
-                #         item.semiFixed = True
-
-                if has_bar_priority is True and item.myItemType == Node.Subestacao:
+                if (has_bar_priority is True
+                        and item.myItemType == Node.Subestacao):
                     pos = pos_barra + 25
 
                 elif has_pos_priority:
@@ -1891,9 +1938,6 @@ class SceneWidget(QtGui.QGraphicsScene):
                     pos = pos_barra
 
                 item.setY(pos)
-
-
-
 
         for item in self.selectedItems():
             if isinstance(item, Edge):
@@ -1950,10 +1994,10 @@ class ViewWidget(QtGui.QGraphicsView):
             return
         self.scale(scale_factor, scale_factor)
 
-class add_remove_command(QtGui.QUndoCommand):
 
+class AddRemoveCommand(QtGui.QUndoCommand):
     def __init__(self, mode, scene, item):
-        super(add_remove_command, self).__init__(mode)
+        super(AddRemoveCommand, self).__init__(mode)
         self.mode = mode
         self.item = item
         self.scene = scene
@@ -1972,45 +2016,20 @@ class add_remove_command(QtGui.QUndoCommand):
     def undo(self):
         if self.mode == "Add":
             self.scene.removeItem(self.item)
-
-
         if self.mode == "Remove":
             self.scene.addItem(self.item)
-            if self.item.Noc != None:
-                lista = self.item.Noc.edges    
+            if self.item.Noc is not None:
+                lista = self.item.Noc.edges
                 for edge in lista:
                     if edge.w1 == self.item.Noc:
-                        new_edge = Edge(self.item, edge.w2, self.scene.myLineMenu)
+                        new_edge = Edge(
+                            self.item, edge.w2, self.scene.myLineMenu)
                     else:
-                        new_edge = Edge(self.item, edge.w1, self.scene.myLineMenu)
+                        new_edge = Edge(
+                            self.item, edge.w1, self.scene.myLineMenu)
                     self.scene.addItem(new_edge)
                 self.item.Noc.remove_edges()
                 self.scene.removeItem(self.item.Noc)
-
-
-                
-
-# class add_remove_edge_break_command(QtGui.QUndoCommand):
-
-#     def __init__(self, mode, scene, edge, edge_broken, break_mode):
-#         super(add_remove_command,self).__init__(mode)
-#         self.mode = mode
-#         self.edge = edge
-#         self.scene = scene
-#         self.count = 0
-
-#     def redo(self):
-#         self.count += 1
-#         if self.count <= 1:
-#             return
-#         if self.mode == "Add":
-#             self.scene.addItem(edge)
-#             self.scene.break_edge(edge_broken, break_mode, edge)
-
-#     def undo(self):
-#         if self.mode == "Add":
-#             self.scene.removeItem(edge)
-#             self.scene.reco
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
