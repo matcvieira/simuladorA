@@ -5,6 +5,7 @@
 #        por: Lucas S Melo
 #
 
+
 from PySide import QtCore, QtGui
 from graphics import SceneWidget, ViewWidget
 from models import DiagramToXML
@@ -82,7 +83,7 @@ class JanelaPrincipal(object):
         self.dockWidget_Buttons_Contents.setObjectName(
             "dockWidget_Buttons_Contents")
 
-        #  define o layput dos botoes no dockWidget  gridLayout
+        #  define o layout dos botoes no dockWidget  gridLayout
         self.gridLayout_dockWidget = QtGui.QGridLayout(
             self.dockWidget_Buttons_Contents)
         self.gridLayout_dockWidget.setObjectName("gridLayout_dockWidget")
@@ -140,6 +141,7 @@ class JanelaPrincipal(object):
         self.buttonGroup.addButton(self.noButton, 4)
         self.buttonGroup.setExclusive(False)
 
+        # adiciona sinais ao buttonGroup (grupo de botoes da pagina 1)
         self.buttonGroup.buttonClicked[int].connect(self.buttonGroupClicked)
 
         # define labels da primeira pagina do dockWidget
@@ -277,7 +279,7 @@ class JanelaPrincipal(object):
 
     def itemInserted(self, item_type):
         '''
-            Callback chamada no momento em que um item e iserido
+            Callback chamada no momento em que um item e inserido
             no diagrama grafico
         '''
         # self.buttonGroup.button(item_type).setChecked(False)
@@ -285,6 +287,11 @@ class JanelaPrincipal(object):
         pass
 
     def save(self):
+        '''
+            Esta funçao salva os elementos graficos chamando 
+            a funçao que os codifica em um arquivo XML
+        '''
+
         filename = QtGui.QFileDialog.getSaveFileName(
             None, 'Salvar Diagrama', os.getenv('HOME'))
         print filename
@@ -295,6 +302,10 @@ class JanelaPrincipal(object):
         file2.write_xml(filename[0] + '_CIM')
 
     def open(self):
+        '''
+            Esta funçao abre o arquivo XML salvo anteriormente
+            e chama a funçao que redesenha os elementos graficos
+        '''
         filename = QtGui.QFileDialog.getOpenFileName(
             None, 'Abrir Diagrama', os.getenv('HOME'))
         file = models.XMLToDiagram(self.sceneWidget, filename[0])
@@ -302,7 +313,7 @@ class JanelaPrincipal(object):
     def setSelect(self):
         '''
             Callback chamada no momento em que se faz necessario
-            alterar do modo de selecao para movimentacao de items
+            alterar o modo de selecao para movimentacao de itens
             no diagrama grafico ou vice-versa
         '''
         if self.sceneWidget.myMode == self.sceneWidget.SelectItems:
@@ -313,7 +324,7 @@ class JanelaPrincipal(object):
     def buttonGroupClicked(self, id):
         '''
             Callback chamada no momento em que um botão de inserção
-            de itens e pressionado.
+            de itens é pressionado.
         '''
 
         if self.buttonGroup.button(id).isChecked():
@@ -340,15 +351,21 @@ class JanelaPrincipal(object):
 
 
     def retranslateUi(self, main_window):
+        '''
+            Esta funçao nomeia a janela principal e seus widgets
+        '''
 
+        #seta o nome da janela principal
         main_window.setWindowTitle(QtGui.QApplication.translate(
             "main_window", "Smart Power v0.2 - Simulador de Redes Elétricas de Distribuição",
             None, QtGui.QApplication.UnicodeUTF8))
 
+        #seta o nome da toolBar
         self.toolBar.setWindowTitle(
             QtGui.QApplication.translate("main_window", "toolBar", None,
                                          QtGui.QApplication.UnicodeUTF8))
 
+        #seta o nome de cada QPushButton da toolBox
         self.substationButton.setText(
             QtGui.QApplication.translate(
                 "main_window", "Subestação", None,
@@ -381,6 +398,7 @@ class JanelaPrincipal(object):
             QtGui.QApplication.translate(
                 "main_window", "Linha", None, QtGui.QApplication.UnicodeUTF8))
 
+        #seta o nome de cada QLabel da toolBox
         self.lineLabel.setText(
             QtGui.QApplication.translate(
                 "main_window", "Linha", None, QtGui.QApplication.UnicodeUTF8))
@@ -393,17 +411,23 @@ class JanelaPrincipal(object):
             QtGui.QApplication.translate(
                 "main_window", "Nó de Carga", None, QtGui.QApplication.UnicodeUTF8))
 
+        #seta o nome da primeira page da toolBox
+        #que contem os QButtons de inserçao dos elementos
         self.toolBox.setItemText(
             self.toolBox.indexOf(self.page_1),
             QtGui.QApplication.translate(
                 "main_window", "Pagina 1", None,
                 QtGui.QApplication.UnicodeUTF8))
 
+        #seta o nome da segunda page da toolBox
+        #que contem a hierarquia dos elementos
         self.toolBox.setItemText(
             self.toolBox.indexOf(self.page_2), QtGui.QApplication.translate(
                 "main_window", "Pagina 2", None,
                 QtGui.QApplication.UnicodeUTF8))
 
+        #seta o nome e os atalhos dos botoes da toolBar
+        #que contem as opçoes de arquivamento
         self.actionExit.setText(
             QtGui.QApplication.translate(
                 "main_window", "Sair", None, QtGui.QApplication.UnicodeUTF8))
@@ -501,14 +525,24 @@ class JanelaPrincipal(object):
                 "main_window", "Ctrl, e", None,
                 QtGui.QApplication.UnicodeUTF8))
 
-
 class ControlMainWindow(QtGui.QMainWindow):
+
+    '''
+        Classe que cria a janela principal do programa.
+    '''
     def __init__(self, parent=None):
+        '''
+            Metodo inicial (construtor) da classe ControlMainWindow.
+            Chama o metodo construtor da classe QtGui.QMainWindow passando
+            como parametro parent.
+        '''
         super(ControlMainWindow, self).__init__(parent)
         self.ui = JanelaPrincipal()
         self.ui.inicializar_componentes(self)
 
 if __name__ == "__main__":
+    # metodo estatico main (principal) que e iniciado quando se 
+    # executa o simulador
     app = QtGui.QApplication(sys.argv)
     mySW = ControlMainWindow()
     mySW.show()

@@ -1,6 +1,7 @@
 # coding=utf-8
+
 """
-módulo de representação nó profundidade
+    módulo de representação nó profundidade
 """
 
 from collections import OrderedDict

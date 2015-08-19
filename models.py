@@ -127,18 +127,7 @@ class DiagramToXML(ElementTree.Element):
 
                     CE.append(identificador)
                     CE.append(fases)
-
-
-
-
-
-
-
-
-
-
-
-
+                    
                 self.append(CE)
         for item in lista:
 
